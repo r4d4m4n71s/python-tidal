@@ -27,7 +27,16 @@ from typing import TYPE_CHECKING, List, Optional, Union, cast
 from urllib.parse import urljoin
 
 from tidalapi.exceptions import ObjectNotFound
-from tidalapi.types import JsonObj, AlbumOrder, ItemOrder, OrderDirection, PlaylistOrder, ArtistOrder, MixOrder, VideoOrder
+from tidalapi.types import (
+    AlbumOrder,
+    ArtistOrder,
+    ItemOrder,
+    JsonObj,
+    MixOrder,
+    OrderDirection,
+    PlaylistOrder,
+    VideoOrder,
+)
 
 if TYPE_CHECKING:
     from tidalapi.album import Album

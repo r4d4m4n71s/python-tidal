@@ -23,7 +23,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Sequence, Union, cast
 
 from tidalapi.exceptions import ObjectNotFound, TooManyRequests
-from tidalapi.types import JsonObj, ItemOrder, OrderDirection
+from tidalapi.types import ItemOrder, JsonObj, OrderDirection
 from tidalapi.user import LoggedInUser
 
 if TYPE_CHECKING:
