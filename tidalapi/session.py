@@ -631,14 +631,14 @@ class Session:
                 "is_pkce": {"data": self.is_pkce},
                 # "expiry_time": {"data": self.expiry_time},
             }
-            with session_file.open("w") as outfile:
-                json.dump(data, outfile)
+            with session_file.open("w") as file:
+                json.dump(data, file)
 
     def load_session_from_file(self, session_file: Path):
         try:
-            with open(session_file) as f:
+            with session_file.open("r") as file:
                 log.info("Loading session from %s...", session_file)
-                data = json.load(f)
+                data = json.load(file)
         except Exception as e:
             log.info("Could not load session from %s: %s", session_file, e)
             return False
