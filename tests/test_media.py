@@ -31,6 +31,7 @@ from tidalapi.media import (
     MimeType,
     Quality,
 )
+from tidalapi.mix import MixType
 
 from .cover import verify_image_resolution, verify_video_resolution
 
@@ -452,6 +453,9 @@ def test_get_radio_mix(session):
     track = session.track(12445712)
     radio = track.get_radio_mix()
     assert radio.id == "001c2cbc32b5b7c17f8c0aa55d9541"
+    assert radio.title == "Happy Together"
+    assert radio.sub_title == "The Turtles"
+    assert radio.mix_type == MixType.track
 
 
 def test_get_stream_bts(session):

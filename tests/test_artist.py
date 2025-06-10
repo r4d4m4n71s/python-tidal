@@ -20,6 +20,7 @@ import requests
 
 import tidalapi
 from tidalapi.exceptions import ObjectNotFound
+from tidalapi.mix import MixType
 
 from .cover import verify_image_cover
 
@@ -144,6 +145,9 @@ def test_get_radio_mix(session):
     artist = session.artist(3514310)
     radio = artist.get_radio_mix()
     assert radio.id == "000038b3b74d5ce3a17b43a36d62bb"
+    assert radio.title == "The Turtles"
+    assert radio.sub_title == "Artist Radio"
+    assert radio.mix_type == MixType.artist
 
 
 def test_artist_image(session):
