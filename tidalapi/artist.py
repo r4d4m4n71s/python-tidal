@@ -25,7 +25,7 @@ from warnings import warn
 import dateutil.parser
 from typing_extensions import NoReturn
 
-from tidalapi.exceptions import ObjectNotFound, TooManyRequests
+from tidalapi.exceptions import ObjectNotFound, TooManyRequests, MetadataNotAvailable
 from tidalapi.types import JsonObj
 
 from . import mix
@@ -228,31 +228,43 @@ class Artist:
             ),
         )
 
-    def get_radio(self) -> List["Track"]:
-        """Queries TIDAL for the artist radio, which is a mix of tracks that are similar
-        to what the artist makes.
+    def get_radio(self, limit: int = 100) -> List["Track"]:
+        """Queries TIDAL for the artist radio, i.e. a list of tracks similar to this artist.
 
         :return: A list of :class:`Tracks <tidalapi.media.Track>`
         """
-        params = {"limit": 100}
-        return cast(
-            List["Track"],
-            self.request.map_request(
-                f"artists/{self.id}/radio",
-                params=params,
-                parse=self.session.parse_track,
-            ),
-        )
+        params = {"limit": limit}
+
+        try:
+            request = self.request.request(
+                "GET", "artists/%s/radio" % self.id, params=params
+            )
+        except ObjectNotFound:
+            raise MetadataNotAvailable("Track radio not available for this track")
+        except TooManyRequests:
+            raise TooManyRequests("Track radio unavailable")
+        else:
+            json_obj = request.json()
+            radio = self.request.map_json(json_obj, parse=self.session.parse_track)
+            assert isinstance(radio, list)
+            return cast(List["Track"], radio)
 
     def get_radio_mix(self) -> mix.Mix:
-        """Queries TIDAL for the artist radio, which is a mix of tracks that are similar
-        to what the artist makes.
+        """Queries TIDAL for the artist radio, i.e. mix of tracks that are similar to this artist.
 
         :return: A :class:`Mix <tidalapi.mix.Mix>`
+        :raises: A :class:`exceptions.MetadataNotAvailable` if no track radio mix is available
         """
-        json = self.request.request("GET", f"artists/{self.id}/mix").json()
 
-        return self.session.mix(json.get("id"))
+        try:
+            request = self.request.request("GET", "artists/%s/mix" % self.id)
+        except ObjectNotFound:
+            raise MetadataNotAvailable("Artist radio not available for this artist")
+        except TooManyRequests:
+            raise TooManyRequests("Artist radio unavailable")
+        else:
+            json_obj = request.json()
+            return self.session.mix(json_obj.get("id"))
 
     def items(self) -> List[NoReturn]:
         """The artist page does not supply any items. This only exists for symmetry with
