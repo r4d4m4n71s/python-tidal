@@ -25,7 +25,7 @@ from warnings import warn
 import dateutil.parser
 from typing_extensions import NoReturn
 
-from tidalapi.exceptions import ObjectNotFound, TooManyRequests, MetadataNotAvailable
+from tidalapi.exceptions import MetadataNotAvailable, ObjectNotFound, TooManyRequests
 from tidalapi.types import JsonObj
 
 from . import mix
@@ -229,7 +229,8 @@ class Artist:
         )
 
     def get_radio(self, limit: int = 100) -> List["Track"]:
-        """Queries TIDAL for the artist radio, i.e. a list of tracks similar to this artist.
+        """Queries TIDAL for the artist radio, i.e. a list of tracks similar to this
+        artist.
 
         :return: A list of :class:`Tracks <tidalapi.media.Track>`
         """
@@ -250,7 +251,8 @@ class Artist:
             return cast(List["Track"], radio)
 
     def get_radio_mix(self) -> mix.Mix:
-        """Queries TIDAL for the artist radio, i.e. mix of tracks that are similar to this artist.
+        """Queries TIDAL for the artist radio, i.e. mix of tracks that are similar to
+        this artist.
 
         :return: A :class:`Mix <tidalapi.mix.Mix>`
         :raises: A :class:`exceptions.MetadataNotAvailable` if no track radio mix is available
