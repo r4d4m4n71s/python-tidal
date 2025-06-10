@@ -51,6 +51,8 @@ from tidalapi.exceptions import (
 )
 from tidalapi.types import JsonObj
 
+from . import mix
+
 
 class Quality(str, Enum):
     low_96k: str = "LOW"
@@ -385,11 +387,11 @@ class Track(Media):
             return cast("Lyrics", lyrics)
 
     def get_track_radio(self, limit: int = 100) -> List["Track"]:
-        """Queries TIDAL for the track radio, which is a mix of tracks that are similar
-        to this track.
+        """Queries TIDAL for the track radio mix as a list of tracks similar to this
+        track.
 
         :return: A list of :class:`Tracks <tidalapi.media.Track>`
-        :raises: A :class:`exceptions.MetadataNotAvailable` if no track radio is available
+        :raises: A :class:`exceptions.MetadataNotAvailable` if no track radio mix is available
         """
         params = {"limit": limit}
 
@@ -400,12 +402,29 @@ class Track(Media):
         except ObjectNotFound:
             raise MetadataNotAvailable("Track radio not available for this track")
         except TooManyRequests:
-            raise TooManyRequests("Track radio unavailable)")
+            raise TooManyRequests("Track radio unavailable")
         else:
             json_obj = request.json()
             tracks = self.requests.map_json(json_obj, parse=self.session.parse_track)
             assert isinstance(tracks, list)
             return cast(List["Track"], tracks)
+
+    def get_radio_mix(self) -> mix.Mix:
+        """Queries TIDAL for the track radio mix of tracks that are similar to this
+        track.
+
+        :return: A :class:`Mix <tidalapi.mix.Mix>`
+        :raises: A :class:`exceptions.MetadataNotAvailable` if no track radio mix is available
+        """
+        try:
+            request = self.requests.request("GET", "tracks/%s/mix" % self.id)
+        except ObjectNotFound:
+            raise MetadataNotAvailable("Track radio not available for this track")
+        except TooManyRequests:
+            raise TooManyRequests("Track radio unavailable")
+        else:
+            json_obj = request.json()
+            return self.session.mix(json_obj.get("id"))
 
     def get_stream(self) -> "Stream":
         """Retrieves the track streaming object, allowing for audio transmission.
