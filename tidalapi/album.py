@@ -238,52 +238,69 @@ class Album:
         assert isinstance(items, list)
         return cast(List[Union["Track", "Video"]], items)
 
-    def image(self, dimensions: int = 320, default: str = DEFAULT_ALBUM_IMG) -> str:
+    def image(
+        self, dimensions: Union[int, str] = 320, default: str = DEFAULT_ALBUM_IMG
+    ) -> str:
         """A url to an album image cover.
 
-        :param dimensions: The width and height that you want from the image
+        :param dimensions: The width and height of the album image. If "origin", the original resolution will be used
         :param default: An optional default image to serve if one is not available
         :return: A url to the image.
 
-        Valid resolutions: 80x80, 160x160, 320x320, 640x640, 1280x1280
+        Valid resolutions: 80x80, 160x160, 320x320, 640x640, 1280x1280, 3000x3000 (origin)
         """
 
-        if dimensions not in [80, 160, 320, 640, 1280]:
+        if dimensions not in [80, 160, 320, 640, 1280, "origin"]:
             raise ValueError("Invalid resolution {0} x {0}".format(dimensions))
 
-        if not self.cover:
-            return self.session.config.image_url % (
-                default.replace("-", "/"),
-                dimensions,
-                dimensions,
-            )
+        if dimensions == "origin":
+            if not self.cover:
+                return self.session.config.image_url_origin % (
+                    default.replace("-", "/")
+                )
+            else:
+                return self.session.config.image_url_origin % (
+                    self.cover.replace("-", "/")
+                )
         else:
-            return self.session.config.image_url % (
-                self.cover.replace("-", "/"),
-                dimensions,
-                dimensions,
-            )
+            if not self.cover:
+                return self.session.config.image_url % (
+                    default.replace("-", "/"),
+                    dimensions,
+                    dimensions,
+                )
+            else:
+                return self.session.config.image_url % (
+                    self.cover.replace("-", "/"),
+                    dimensions,
+                    dimensions,
+                )
 
-    def video(self, dimensions: int) -> str:
+    def video(self, dimensions: Union[int, str] = 320) -> str:
         """Creates a url to an mp4 video cover for the album.
 
         Valid resolutions: 80x80, 160x160, 320x320, 640x640, 1280x1280
 
-        :param dimensions: The width an height of the video
+        :param dimensions: The width and height of the album video. If "origin", the original resolution will be used
         :type dimensions: int
         :return: A url to an mp4 of the video cover.
         """
         if not self.video_cover:
             raise AttributeError("This album does not have a video cover.")
 
-        if dimensions not in [80, 160, 320, 640, 1280]:
+        if dimensions not in [80, 160, 320, 640, 1280, "origin"]:
             raise ValueError("Invalid resolution {0} x {0}".format(dimensions))
 
-        return self.session.config.video_url % (
-            self.video_cover.replace("-", "/"),
-            dimensions,
-            dimensions,
-        )
+        if dimensions == "origin":
+            return self.session.config.video_url_origin % (
+                self.video_cover.replace("-", "/")
+            )
+        else:
+            return self.session.config.video_url % (
+                self.video_cover.replace("-", "/"),
+                dimensions,
+                dimensions,
+            )
 
     def page(self) -> "Page":
         """
