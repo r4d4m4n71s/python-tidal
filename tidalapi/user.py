@@ -350,7 +350,8 @@ class Favorites:
         :param playlist_id: One or more playlists
         :param parent_folder_id: Parent folder ID. Default: 'root' playlist folder
         :param validate: Validate if the request was completed successfully
-        :return: True if request was successful, False otherwise. If 'validate', added mixes will be checked.
+        :return: True if request was successful, False otherwise. If 'validate', added
+            mixes will be checked.
         """
         playlist_id = list_validate(playlist_id)
 
@@ -511,11 +512,13 @@ class Favorites:
         return self.requests.request("DELETE", f"{self.base_url}/videos/{video_id}").ok
 
     def remove_mixes(self, mix_ids: list[str] | str, validate: bool = False) -> bool:
-        """Remove one or more mixes (e.g. artist or track mixes) from the user's favorites (v2 endpoint).
+        """Remove one or more mixes (e.g. artist or track mixes) from the user's
+        favorites (v2 endpoint).
 
         :param mix_ids: One or more mix IDs (typically artist or track radios)
         :param validate: Validate if the request was completed successfull
-        :return: True if request was successful, False otherwise. If 'validate', deleted mixes will be checked.
+        :return: True if request was successful, False otherwise. If 'validate', deleted
+            mixes will be checked.
         """
         mix_ids = list_validate(mix_ids)
 
@@ -542,7 +545,8 @@ class Favorites:
     def remove_folders_playlists(
         self, trns: list[str] | str, type: str = "folder"
     ) -> bool:
-        """Removes one or more folders or playlists from the users favourites (v2 endpoint)
+        """Removes one or more folders or playlists from the users favourites (v2
+        endpoint)
 
         :param trns: List of folder (or playlist) trns to be deleted
         :param type: Type of trn: as string, either `folder` or `playlist`. Default `folder`

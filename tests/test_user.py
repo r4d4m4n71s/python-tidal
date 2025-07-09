@@ -23,11 +23,11 @@ import pytest
 import tidalapi
 from tidalapi.exceptions import ObjectNotFound
 from tidalapi.types import (
-    ArtistOrder,
-    PlaylistOrder,
     AlbumOrder,
+    ArtistOrder,
     MixOrder,
     OrderDirection,
+    PlaylistOrder,
 )
 
 
