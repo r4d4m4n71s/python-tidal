@@ -114,8 +114,18 @@ def test_image_cover(session):
     verify_image_cover(session, session.album(108043414), [80, 160, 320, 640, 1280])
 
 
+def test_image_cover_origin(session):
+    image_url = session.album(108043414).image(dimensions="origin")
+    assert image_url.endswith("/origin.jpg")
+
+
 def test_video_cover(session):
     verify_video_cover(session.album(108043414), [80, 160, 320, 640, 1280])
+
+
+def test_video_cover_origin(session):
+    video_url = session.album(108043414).video(dimensions="origin")
+    assert video_url.endswith("/origin.mp4")
 
 
 def test_no_release_date(session):

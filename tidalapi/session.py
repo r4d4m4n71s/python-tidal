@@ -115,10 +115,12 @@ class Config:
     client_id: str
     client_secret: str
     image_url: str = "https://resources.tidal.com/images/%s/%ix%i.jpg"
+    image_url_origin: str = "https://resources.tidal.com/images/%s/origin.jpg"
     item_limit: int
     quality: str
     video_quality: str
     video_url: str = "https://resources.tidal.com/videos/%s/%ix%i.mp4"
+    video_url_origin: str = "https://resources.tidal.com/videos/%s/origin.mp4"
     # Necessary for PKCE authorization only
     client_unique_key: str
     code_verifier: str
