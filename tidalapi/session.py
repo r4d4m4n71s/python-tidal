@@ -956,7 +956,13 @@ class Session:
                 base_url=self.config.openapi_v2_location,
             ).json()
             if res["data"]:
-                return [self.track(tr["id"]) for tr in res["data"]]
+                tracks = []
+                for tr in res["data"]:
+                    try:
+                        tracks.append(self.track(tr["id"]))
+                    except ObjectNotFound:
+                        continue
+                return tracks
             else:
                 log.warning("No matching tracks found for ISRC '%s'", isrc)
                 raise ObjectNotFound
