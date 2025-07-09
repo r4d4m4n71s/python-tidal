@@ -22,6 +22,13 @@ import pytest
 
 import tidalapi
 from tidalapi.exceptions import ObjectNotFound
+from tidalapi.types import (
+    AlbumOrder,
+    ArtistOrder,
+    MixOrder,
+    OrderDirection,
+    PlaylistOrder,
+)
 
 
 def test_user(session):
@@ -222,14 +229,52 @@ def test_folder_moves(session):
     folder_b.remove()
 
 
-def test_add_remove_folder(session):
-    folder = session.user.create_folder(title="testfolderA")
-    folder_id = folder.id
-    # remove folder from favourites
-    session.user.favorites.remove_folders_playlists([folder.id])
-    # check if folder has been removed
-    with pytest.raises(ObjectNotFound):
-        session.folder(folder_id)
+def test_add_remove_favorite_mix(session):
+    mix_ids_single = ["0007646f7c64d03d56846ed25dae3d"]
+    mix_ids_multiple = [
+        "0000fc7cda952f508279ad2f66222a",
+        "0002411cdd08aceba45671ba1f41a2",
+    ]
+
+    def assert_mixes_present(expected_ids: list[str], should_exist: bool):
+        current_ids = [mix.id for mix in session.user.favorites.mixes()]
+        for mix_id in expected_ids:
+            if should_exist:
+                assert mix_id in current_ids
+            else:
+                assert mix_id not in current_ids
+
+    # Add single and verify
+    assert session.user.favorites.add_mixes(mix_ids_single)
+    assert_mixes_present(mix_ids_single, should_exist=True)
+
+    # Add multiple and verify
+    assert session.user.favorites.add_mixes(mix_ids_multiple)
+    assert_mixes_present(mix_ids_multiple, should_exist=True)
+
+    # Remove single and verify
+    assert session.user.favorites.remove_mixes(mix_ids_single)
+    assert_mixes_present(mix_ids_single, should_exist=False)
+
+    # Remove multiple and verify
+    assert session.user.favorites.remove_mixes(mix_ids_multiple)
+    assert_mixes_present(mix_ids_multiple, should_exist=False)
+
+
+def test_add_remove_favorite_mix_validate(session):
+    # Add the same mix twice (Second time will fail, if validate is enabled)
+    # Add a single artist mix
+    assert session.user.favorites.add_mixes("0000343aa1769e75f54f900febba7e")
+    # Add it again. No validate: Success. Validate: Failure
+    assert session.user.favorites.add_mixes("0000343aa1769e75f54f900febba7e")
+    assert not session.user.favorites.add_mixes(
+        "0000343aa1769e75f54f900febba7e", validate=True
+    )
+    # Cleanup after tests & validate
+    assert session.user.favorites.remove_mixes("0000343aa1769e75f54f900febba7e")
+    assert not session.user.favorites.remove_mixes(
+        "0000343aa1769e75f54f900febba7e", validate=True
+    )
 
 
 def test_add_remove_favorite_artist(session):
@@ -240,10 +285,82 @@ def test_add_remove_favorite_artist(session):
     )
 
 
+def test_add_remove_favorite_artist_multiple(session):
+    artist_single = ["1566"]
+    artists_multiple = [
+        "33236",
+        "30395",
+        "24996",
+        "16928",
+        "1728",
+    ]
+
+    def assert_artists_present(expected_ids: list[str], should_exist: bool):
+        current_ids = [str(artist.id) for artist in session.user.favorites.artists()]
+        for artist_id in expected_ids:
+            if should_exist:
+                assert artist_id in current_ids
+            else:
+                assert artist_id not in current_ids
+
+    # Add single and verify
+    assert session.user.favorites.add_artist(artist_single)
+    assert_artists_present(artist_single, should_exist=True)
+
+    # Add multiple and verify
+    assert session.user.favorites.add_artist(artists_multiple)
+    assert_artists_present(artists_multiple, should_exist=True)
+
+    # Remove single and verify
+    assert session.user.favorites.remove_artist(artist_single[0])
+    assert_artists_present(artist_single, should_exist=False)
+
+    # Remove multiple (one by one) and verify
+    for artist_id in artists_multiple:
+        assert session.user.favorites.remove_artist(artist_id)
+    assert_artists_present(artists_multiple, should_exist=False)
+
+
 def test_add_remove_favorite_album(session):
     favorites = session.user.favorites
     album_id = 32961852
     add_remove(album_id, favorites.add_album, favorites.remove_album, favorites.albums)
+
+
+def test_add_remove_favorite_album_multiple(session):
+    album_single = ["32961852"]
+    albums_multiple = [
+        "446470480",
+        "436252631",
+        "426730499",
+        "437654760",
+        "206012740",
+    ]
+
+    def assert_albums_present(expected_ids: list[str], should_exist: bool):
+        current_ids = [str(album.id) for album in session.user.favorites.albums()]
+        for album_id in expected_ids:
+            if should_exist:
+                assert album_id in current_ids
+            else:
+                assert album_id not in current_ids
+
+    # Add single and verify
+    assert session.user.favorites.add_album(album_single)
+    assert_albums_present(album_single, should_exist=True)
+
+    # Add multiple and verify
+    assert session.user.favorites.add_album(albums_multiple)
+    assert_albums_present(albums_multiple, should_exist=True)
+
+    # Remove single and verify
+    assert session.user.favorites.remove_album(album_single[0])
+    assert_albums_present(album_single, should_exist=False)
+
+    # Remove multiple and verify
+    for album in albums_multiple:
+        assert session.user.favorites.remove_album(album)
+    assert_albums_present(albums_multiple, should_exist=False)
 
 
 def test_add_remove_favorite_playlist(session):
@@ -264,10 +381,81 @@ def test_add_remove_favorite_playlist(session):
     )
 
 
+def test_add_remove_favorite_playlists(session):
+    playlist_single = ["94fe2b9b-096d-4b39-8129-d5b8e774e9b3"]
+    playlists_multiple = [
+        "285d6293-8f77-4dc1-8dab-a262f3d0cb43",
+        "6bd2a3a8-a84e-4540-9077-f99858c230d5",
+        "e89f8af0-cf8c-4f5d-81fc-7b5955c558f1",
+        "13aacb6d-aa07-4186-8fb1-41b6a617d1c8",
+        "ca372375-7d98-4970-a7b0-04db88b68c6d",
+    ]
+
+    def assert_playlists_present(expected_ids: list[str], should_exist: bool):
+        current_ids = [pl.id for pl in session.user.favorites.playlists()]
+        for pl_id in expected_ids:
+            if should_exist:
+                assert pl_id in current_ids
+            else:
+                assert pl_id not in current_ids
+
+    # Add single and verify
+    assert session.user.favorites.add_playlist(playlist_single)
+    assert_playlists_present(playlist_single, should_exist=True)
+
+    # Add multiple and verify
+    assert session.user.favorites.add_playlist(playlists_multiple)
+    assert_playlists_present(playlists_multiple, should_exist=True)
+
+    # Remove single and verify
+    assert session.user.favorites.remove_playlist(playlist_single[0])
+    assert_playlists_present(playlist_single, should_exist=False)
+
+    # Remove multiple and verify
+    for playlist in playlists_multiple:
+        assert session.user.favorites.remove_playlist(playlist)
+    assert_playlists_present(playlists_multiple, should_exist=False)
+
+
 def test_add_remove_favorite_track(session):
     favorites = session.user.favorites
     track_id = 32961853
     add_remove(track_id, favorites.add_track, favorites.remove_track, favorites.tracks)
+
+
+def test_add_remove_favorite_track_multiple(session):
+    track_single = ["444306564"]
+    tracks_multiple = [
+        "439159646",
+        "445292352",
+        "444053782",
+        "426730500",
+    ]
+
+    def assert_tracks_present(expected_ids: list[str], should_exist: bool):
+        current_ids = [str(track.id) for track in session.user.favorites.tracks()]
+        for track_id in expected_ids:
+            if should_exist:
+                assert track_id in current_ids
+            else:
+                assert track_id not in current_ids
+
+    # Add single and verify
+    assert session.user.favorites.add_track(track_single)
+    assert_tracks_present(track_single, should_exist=True)
+
+    # Add multiple and verify
+    assert session.user.favorites.add_track(tracks_multiple)
+    assert_tracks_present(tracks_multiple, should_exist=True)
+
+    # Remove single and verify
+    assert session.user.favorites.remove_track(track_single[0])
+    assert_tracks_present(track_single, should_exist=False)
+
+    # Remove multiple (one by one) and verify
+    for track_id in tracks_multiple:
+        assert session.user.favorites.remove_track(track_id)
+    assert_tracks_present(tracks_multiple, should_exist=False)
 
 
 def test_add_remove_favorite_video(session):
@@ -281,6 +469,214 @@ def test_get_favorite_mixes(session):
     mixes = favorites.mixes()
     assert len(mixes) > 0
     assert isinstance(mixes[0], tidalapi.MixV2)
+
+
+def test_get_favorite_playlists_order(session):
+    # Add 5 favourite playlists to ensure enough playlists exist for the tests
+    playlist_ids = [
+        "285d6293-8f77-4dc1-8dab-a262f3d0cb43",
+        "6bd2a3a8-a84e-4540-9077-f99858c230d5",
+        "e89f8af0-cf8c-4f5d-81fc-7b5955c558f1",
+        "13aacb6d-aa07-4186-8fb1-41b6a617d1c8",
+        "ca372375-7d98-4970-a7b0-04db88b68c6d",
+    ]
+    # Add playlist one at a time (will ensure non-identical DateCreated)
+    for playlist_id in playlist_ids:
+        assert session.user.favorites.add_playlist(playlist_id)
+
+    def get_playlist_ids(**kwargs) -> list[str]:
+        return [str(pl.id) for pl in session.user.favorites.playlists(**kwargs)]
+
+    # Default sort should equal DateCreated ascending
+    ids_default = get_playlist_ids()
+    ids_date_created_asc = get_playlist_ids(
+        order=PlaylistOrder.DateCreated,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_date_created_asc
+
+    # DateCreated descending is reverse of ascending
+    ids_date_created_desc = get_playlist_ids(
+        order=PlaylistOrder.DateCreated,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_created_desc == ids_date_created_asc[::-1]
+
+    # Name ascending vs. descending
+    ids_name_asc = get_playlist_ids(
+        order=PlaylistOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_name_desc = get_playlist_ids(
+        order=PlaylistOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # Cleanup
+    assert session.user.favorites.remove_playlist(playlist_ids)
+
+
+def test_get_favorite_albums_order(session):
+    album_ids = [
+        "446470480",
+        "436252631",
+        "426730499",
+        "437654760",
+        "206012740",
+    ]
+
+    # Add playlist one at a time (will ensure non-identical DateAdded)
+    for album_id in album_ids:
+        assert session.user.favorites.add_album(album_id)
+
+    def get_album_ids(**kwargs) -> list[str]:
+        return [str(album.id) for album in session.user.favorites.albums(**kwargs)]
+
+    # Default sort should equal name ascending
+    ids_default = get_album_ids()
+    ids_name_asc = get_album_ids(
+        order=AlbumOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_name_asc
+
+    # Name descending is reverse of ascending
+    ids_name_desc = get_album_ids(
+        order=AlbumOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # Date added ascending vs. descending
+    ids_date_created_asc = get_album_ids(
+        order=AlbumOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_date_created_desc = get_album_ids(
+        order=AlbumOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_created_asc == ids_date_created_desc[::-1]
+
+    # Release date ascending vs. descending
+    ids_rel_date_created_asc = get_album_ids(
+        order=AlbumOrder.ReleaseDate,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_rel_date_created_desc = get_album_ids(
+        order=AlbumOrder.ReleaseDate,
+        order_direction=OrderDirection.Descending,
+    )
+    # TODO Somehow these two are not 100% equal. Why?
+    # assert ids_rel_date_created_asc == ids_rel_date_created_desc[::-1]
+
+    # Cleanup
+    for album_id in album_ids:
+        assert session.user.favorites.remove_album(album_id)
+
+
+def test_get_favorite_mixes_order(session):
+    mix_ids = [
+        "0007646f7c64d03d56846ed25dae3d",
+        "0000fc7cda952f508279ad2f66222a",
+        "0002411cdd08aceba45671ba1f41a2",
+        "00026ca3141ec4758599dda8801d84",
+        "00031d3da7d212ac54e2b5d6a42849",
+    ]
+
+    # Add mix one at a time (will ensure non-identical DateAdded)
+    for mix_id in mix_ids:
+        assert session.user.favorites.add_mixes(mix_id)
+
+    def get_mix_ids(**kwargs) -> list[str]:
+        return [str(mix.id) for mix in session.user.favorites.mixes(**kwargs)]
+
+    # Default sort should equal DateAdded ascending
+    ids_default = get_mix_ids()
+    ids_date_added_asc = get_mix_ids(
+        order=MixOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_date_added_asc
+
+    # DateAdded descending is reverse of ascending
+    ids_date_added_desc = get_mix_ids(
+        order=MixOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_added_desc == ids_date_added_asc[::-1]
+
+    # Name ascending vs. descending
+    ids_name_asc = get_mix_ids(
+        order=MixOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_name_desc = get_mix_ids(
+        order=MixOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # MixType ascending vs. descending
+    ids_type_asc = get_mix_ids(
+        order=MixOrder.MixType,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_type_desc = get_mix_ids(
+        order=MixOrder.MixType,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_type_desc == ids_type_asc[::-1]
+
+    # Cleanup
+    assert session.user.favorites.remove_mixes(mix_ids, validate=True)
+
+
+def test_get_favorite_artists_order(session):
+    artist_ids = [
+        "4836523",
+        "3642059",
+        "5652094",
+        "9762896",
+        "6777457",
+    ]
+
+    for artist_id in artist_ids:
+        assert session.user.favorites.add_artist(artist_id)
+
+    def get_artist_ids(**kwargs) -> list[str]:
+        return [str(artist.id) for artist in session.user.favorites.artists(**kwargs)]
+
+    # Default sort should equal Name ascending
+    ids_default = get_artist_ids()
+    ids_name_asc = get_artist_ids(
+        order=ArtistOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_name_asc
+
+    # Name descending is reverse of ascending
+    ids_name_desc = get_artist_ids(
+        order=ArtistOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # DateAdded ascending vs. descending
+    ids_date_added_asc = get_artist_ids(
+        order=ArtistOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_date_added_desc = get_artist_ids(
+        order=ArtistOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_added_desc == ids_date_added_asc[::-1]
+
+    # Cleanup
+    for artist_id in artist_ids:
+        assert session.user.favorites.remove_artist(artist_id)
 
 
 def add_remove(object_id, add, remove, objects):

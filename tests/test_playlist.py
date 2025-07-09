@@ -22,6 +22,7 @@ from dateutil import tz
 
 import tidalapi
 from tidalapi.exceptions import ObjectNotFound
+from tidalapi.types import ItemOrder, OrderDirection
 
 from .cover import verify_image_cover, verify_image_resolution
 
@@ -319,6 +320,150 @@ def test_get_tracks(session):
     assert len(items) >= 5288
     assert items[0].id == 199477058
     assert items[5287].id == 209284860
+
+
+def test_get_tracks_order(session):
+    pl = session.user.create_playlist("TestingOrder", "TestingOrder")
+    # Add four tracks, one after the other (Thus user_date_added is NOT identical)
+    assert pl.add("246567991")
+    assert pl.add("23749237")
+    assert pl.add("185042773")
+    assert pl.add("180688234")
+
+    # Default order
+    tracks = pl.tracks()
+    tr = tracks[0]
+    # Default order: First track should correspond to first track added
+    assert tr.id == 246567991
+
+    # Index, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Index, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "23749237" (First track added)
+    assert trs[0].id == 246567991
+    trs = pl.tracks(order=ItemOrder.Index, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "180688234" (Last track added)
+    assert trs[0].id == 180688234
+
+    # Title Name, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Name, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "Beam Me Up", "180688234"
+    assert trs[0].id == 180688234
+    trs = pl.tracks(order=ItemOrder.Name, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "Joakim,Nothing Gold", "185042773"
+    assert trs[0].id == 185042773
+
+    # Artist Name, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Artist, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be by Artist:"Hubbabubbaklubb"; "23749237"
+    assert trs[0].id == 23749237
+    trs = pl.tracks(order=ItemOrder.Artist, order_direction=OrderDirection.Descending)
+    # Descending: First track should be by Artist:"Todd Terje"; "23749237"
+    assert trs[0].id == 246567991
+
+    # Album Name, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Album, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be from Album: "It's Album Time"; "246567991"
+    assert trs[0].id == 246567991
+    trs = pl.tracks(order=ItemOrder.Album, order_direction=OrderDirection.Descending)
+    # Descending: First track should be from Album: "Walking the Midnight Streets"; "23749237"
+    assert trs[0].id == 180688234
+
+    # Date, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Album, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "246567991"
+    assert trs[0].id == 246567991
+    added_first = trs[0].user_date_added
+    trs = pl.tracks(order=ItemOrder.Album, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "23749237"
+    assert trs[0].id == 180688234
+    added_last = trs[0].user_date_added
+    # Tracks are added one after the other so first track should be added before last
+    assert added_first < added_last
+
+    # Track Length, ascending/descending
+    trs = pl.tracks(order=ItemOrder.Length, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "23749237"
+    assert trs[0].id == 23749237
+    length_first = trs[0].duration
+    trs = pl.tracks(order=ItemOrder.Length, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "185042773"
+    assert trs[0].id == 185042773
+    length_last = trs[0].duration
+    assert length_first < length_last
+    # Cleanup
+    pl.delete()
+
+
+def test_get_items_order(session):
+    pl = session.user.create_playlist("TestingOrder", "TestingOrder")
+    # Add four tracks, one after the other (Thus user_date_added is NOT identical)
+    assert pl.add("246567991")
+    assert pl.add("23749237")
+    assert pl.add("185042773")
+    assert pl.add("180688234")
+
+    # Default order
+    tracks = pl.items()
+    tr = tracks[0]
+    # Default order: First track should correspond to first track added
+    assert tr.id == 246567991
+
+    # Index, ascending/descending
+    trs = pl.items(order=ItemOrder.Index, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "23749237" (First track added)
+    assert trs[0].id == 246567991
+    trs = pl.items(order=ItemOrder.Index, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "180688234" (Last track added)
+    assert trs[0].id == 180688234
+
+    # Title Name, ascending/descending
+    trs = pl.items(order=ItemOrder.Name, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "Beam Me Up", "180688234"
+    assert trs[0].id == 180688234
+    trs = pl.items(order=ItemOrder.Name, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "Joakim,Nothing Gold", "185042773"
+    assert trs[0].id == 185042773
+
+    # Artist Name, ascending/descending
+    trs = pl.items(order=ItemOrder.Artist, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be by Artist:"Hubbabubbaklubb"; "23749237"
+    assert trs[0].id == 23749237
+    trs = pl.items(order=ItemOrder.Artist, order_direction=OrderDirection.Descending)
+    # Descending: First track should be by Artist:"Todd Terje"; "23749237"
+    assert trs[0].id == 246567991
+
+    # Album Name, ascending/descending
+    trs = pl.items(order=ItemOrder.Album, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be from Album: "It's Album Time"; "246567991"
+    assert trs[0].id == 246567991
+    trs = pl.items(order=ItemOrder.Album, order_direction=OrderDirection.Descending)
+    # Descending: First track should be from Album: "Walking the Midnight Streets"; "23749237"
+    assert trs[0].id == 180688234
+
+    # Date, ascending/descending
+    trs = pl.items(order=ItemOrder.Album, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "246567991"
+    assert trs[0].id == 246567991
+    added_first = trs[0].user_date_added
+    trs = pl.items(order=ItemOrder.Album, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "23749237"
+    assert trs[0].id == 180688234
+    added_last = trs[0].user_date_added
+    # Tracks are added one after the other so first track should be added before last
+    assert added_first < added_last
+
+    # Track Length, ascending/descending
+    trs = pl.items(order=ItemOrder.Length, order_direction=OrderDirection.Ascending)
+    # Ascending: First track should be "23749237"
+    assert trs[0].id == 23749237
+    length_first = trs[0].duration
+    trs = pl.items(order=ItemOrder.Length, order_direction=OrderDirection.Descending)
+    # Descending: First track should be "185042773"
+    assert trs[0].id == 185042773
+    length_last = trs[0].duration
+    assert length_first < length_last
+    # Cleanup
+    pl.delete()
 
 
 def test_get_videos(session):
