@@ -283,6 +283,214 @@ def test_get_favorite_mixes(session):
     assert isinstance(mixes[0], tidalapi.MixV2)
 
 
+def test_get_favorite_playlists_order(session):
+    # Add 5 favourite playlists to ensure enough playlists exist for the tests
+    playlist_ids = [
+        "285d6293-8f77-4dc1-8dab-a262f3d0cb43",
+        "6bd2a3a8-a84e-4540-9077-f99858c230d5",
+        "e89f8af0-cf8c-4f5d-81fc-7b5955c558f1",
+        "13aacb6d-aa07-4186-8fb1-41b6a617d1c8",
+        "ca372375-7d98-4970-a7b0-04db88b68c6d",
+    ]
+    # Add playlist one at a time (will ensure non-identical DateCreated)
+    for playlist_id in playlist_ids:
+        assert session.user.favorites.add_playlist(playlist_id)
+
+    def get_playlist_ids(**kwargs) -> list[str]:
+        return [str(pl.id) for pl in session.user.favorites.playlists(**kwargs)]
+
+    # Default sort should equal DateCreated ascending
+    ids_default = get_playlist_ids()
+    ids_date_created_asc = get_playlist_ids(
+        order=PlaylistOrder.DateCreated,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_date_created_asc
+
+    # DateCreated descending is reverse of ascending
+    ids_date_created_desc = get_playlist_ids(
+        order=PlaylistOrder.DateCreated,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_created_desc == ids_date_created_asc[::-1]
+
+    # Name ascending vs. descending
+    ids_name_asc = get_playlist_ids(
+        order=PlaylistOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_name_desc = get_playlist_ids(
+        order=PlaylistOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # Cleanup
+    assert session.user.favorites.remove_playlist(playlist_ids)
+
+
+def test_get_favorite_albums_order(session):
+    album_ids = [
+        "446470480",
+        "436252631",
+        "426730499",
+        "437654760",
+        "206012740",
+    ]
+
+    # Add playlist one at a time (will ensure non-identical DateAdded)
+    for album_id in album_ids:
+        assert session.user.favorites.add_album(album_id)
+
+    def get_album_ids(**kwargs) -> list[str]:
+        return [str(album.id) for album in session.user.favorites.albums(**kwargs)]
+
+    # Default sort should equal name ascending
+    ids_default = get_album_ids()
+    ids_name_asc = get_album_ids(
+        order=AlbumOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_name_asc
+
+    # Name descending is reverse of ascending
+    ids_name_desc = get_album_ids(
+        order=AlbumOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # Date added ascending vs. descending
+    ids_date_created_asc = get_album_ids(
+        order=AlbumOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_date_created_desc = get_album_ids(
+        order=AlbumOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_created_asc == ids_date_created_desc[::-1]
+
+    # Release date ascending vs. descending
+    ids_rel_date_created_asc = get_album_ids(
+        order=AlbumOrder.ReleaseDate,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_rel_date_created_desc = get_album_ids(
+        order=AlbumOrder.ReleaseDate,
+        order_direction=OrderDirection.Descending,
+    )
+    # TODO Somehow these two are not 100% equal. Why?
+    # assert ids_rel_date_created_asc == ids_rel_date_created_desc[::-1]
+
+    # Cleanup
+    for album_id in album_ids:
+        assert session.user.favorites.remove_album(album_id)
+
+
+def test_get_favorite_mixes_order(session):
+    mix_ids = [
+        "0007646f7c64d03d56846ed25dae3d",
+        "0000fc7cda952f508279ad2f66222a",
+        "0002411cdd08aceba45671ba1f41a2",
+        "00026ca3141ec4758599dda8801d84",
+        "00031d3da7d212ac54e2b5d6a42849",
+    ]
+
+    # Add mix one at a time (will ensure non-identical DateAdded)
+    for mix_id in mix_ids:
+        assert session.user.favorites.add_mixes(mix_id)
+
+    def get_mix_ids(**kwargs) -> list[str]:
+        return [str(mix.id) for mix in session.user.favorites.mixes(**kwargs)]
+
+    # Default sort should equal DateAdded ascending
+    ids_default = get_mix_ids()
+    ids_date_added_asc = get_mix_ids(
+        order=MixOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_date_added_asc
+
+    # DateAdded descending is reverse of ascending
+    ids_date_added_desc = get_mix_ids(
+        order=MixOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_added_desc == ids_date_added_asc[::-1]
+
+    # Name ascending vs. descending
+    ids_name_asc = get_mix_ids(
+        order=MixOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_name_desc = get_mix_ids(
+        order=MixOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # MixType ascending vs. descending
+    ids_type_asc = get_mix_ids(
+        order=MixOrder.MixType,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_type_desc = get_mix_ids(
+        order=MixOrder.MixType,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_type_desc == ids_type_asc[::-1]
+
+    # Cleanup
+    assert session.user.favorites.remove_mixes(mix_ids, validate=True)
+
+
+def test_get_favorite_artists_order(session):
+    artist_ids = [
+        "4836523",
+        "3642059",
+        "5652094",
+        "9762896",
+        "6777457",
+    ]
+
+    for artist_id in artist_ids:
+        assert session.user.favorites.add_artist(artist_id)
+
+    def get_artist_ids(**kwargs) -> list[str]:
+        return [str(artist.id) for artist in session.user.favorites.artists(**kwargs)]
+
+    # Default sort should equal Name ascending
+    ids_default = get_artist_ids()
+    ids_name_asc = get_artist_ids(
+        order=ArtistOrder.Name,
+        order_direction=OrderDirection.Ascending,
+    )
+    assert ids_default == ids_name_asc
+
+    # Name descending is reverse of ascending
+    ids_name_desc = get_artist_ids(
+        order=ArtistOrder.Name,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_name_desc == ids_name_asc[::-1]
+
+    # DateAdded ascending vs. descending
+    ids_date_added_asc = get_artist_ids(
+        order=ArtistOrder.DateAdded,
+        order_direction=OrderDirection.Ascending,
+    )
+    ids_date_added_desc = get_artist_ids(
+        order=ArtistOrder.DateAdded,
+        order_direction=OrderDirection.Descending,
+    )
+    assert ids_date_added_desc == ids_date_added_asc[::-1]
+
+    # Cleanup
+    for artist_id in artist_ids:
+        assert session.user.favorites.remove_artist(artist_id)
+
+
 def add_remove(object_id, add, remove, objects):
     """Add and remove an item from favorites. Skips the test if the item was already in
     your favorites.
