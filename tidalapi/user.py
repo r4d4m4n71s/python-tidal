@@ -313,44 +313,88 @@ class Favorites:
         self.base_url = f"users/{user_id}/favorites"
         self.v2_base_url = "favorites"
 
-    def add_album(self, album_id: str) -> bool:
-        """Adds an album to the users favorites.
+    def add_album(self, album_id: list[str] | str) -> bool:
+        """Adds one or more albums to the users favorites.
 
         :param album_id: TIDAL's identifier of the album.
         :return: A boolean indicating whether the request was successful or not.
         """
-        return self.requests.request(
-            "POST", f"{self.base_url}/albums", data={"albumId": album_id}
-        ).ok
+        playlist_id = list_validate(album_id)
 
-    def add_artist(self, artist_id: str) -> bool:
-        """Adds an artist to the users favorites.
+        response = self.requests.request(
+            "POST", f"{self.base_url}/albums", data={"albumId": ",".join(playlist_id)}
+        )
+
+        return response.ok
+
+    def add_artist(self, artist_id: list[str] | str) -> bool:
+        """Adds one or more artists to the users favorites.
 
         :param artist_id: TIDAL's identifier of the artist
         :return: A boolean indicating whether the request was successful or not.
         """
+        artist_id = list_validate(artist_id)
+
         return self.requests.request(
-            "POST", f"{self.base_url}/artists", data={"artistId": artist_id}
+            "POST", f"{self.base_url}/artists", data={"artistId": ",".join(artist_id)}
         ).ok
 
-    def add_playlist(self, playlist_id: str) -> bool:
-        """Adds a playlist to the users favorites.
+    def add_playlist(
+        self,
+        playlist_id: list[str] | str,
+        parent_folder_id: str = "root",
+        validate: bool = False,
+    ) -> bool:
+        """Add one or more playlists to the users favorites (v2 endpoint)
 
-        :param playlist_id: TIDAL's identifier of the playlist.
-        :return: A boolean indicating whether the request was successful or not.
+        :param playlist_id: One or more playlists
+        :param parent_folder_id: Parent folder ID. Default: 'root' playlist folder
+        :param validate: Validate if the request was completed successfully
+        :return: True if request was successful, False otherwise. If 'validate', added mixes will be checked.
         """
-        return self.requests.request(
-            "POST", f"{self.base_url}/playlists", data={"uuids": playlist_id}
-        ).ok
+        playlist_id = list_validate(playlist_id)
 
-    def add_track(self, track_id: str) -> bool:
-        """Adds a track to the users favorites.
+        params = {"folderId": parent_folder_id, "uuids": ",".join(playlist_id)}
+        endpoint = "my-collection/playlists/folders/add-favorites"
+
+        response = self.requests.request(
+            method="PUT",
+            path=endpoint,
+            base_url=self.session.config.api_v2_location,
+            params=params,
+        )
+
+        if validate:
+            # Check if the expected playlists has been added
+            json_obj = response.json()
+            added_items = json_obj.get("addedItems", [])
+
+            # No playlists added? Return early
+            if not added_items:
+                return False
+
+            try:
+                # Extract playlist IDs by stripping the 'trn:playlist:' prefix
+                added_ids = {item["trn"].split(":")[2] for item in added_items}
+            except (KeyError, IndexError):
+                # Malformed response; fail gracefully
+                return False
+
+            # Check if all requested playlist IDs were successfully added
+            return set(playlist_id).issubset(added_ids)
+        else:
+            return response.ok
+
+    def add_track(self, track_id: list[str] | str) -> bool:
+        """Add one or more tracks to the users favorites.
 
         :param track_id: TIDAL's identifier of the track.
         :return: A boolean indicating whether the request was successful or not.
         """
+        track_id = list_validate(track_id)
+
         return self.requests.request(
-            "POST", f"{self.base_url}/tracks", data={"trackId": track_id}
+            "POST", f"{self.base_url}/tracks", data={"trackId": ",".join(track_id)}
         ).ok
 
     def add_track_by_isrc(self, isrc: str) -> bool:
@@ -386,12 +430,44 @@ class Favorites:
             params=params,
         ).ok
 
+    def add_mixes(self, mix_ids: list[str] | str, validate: bool = False) -> bool:
+        """Add one or more mixes (eg. artist, track mixes) to the users favorites (v2 endpoint)
+        Note: Default behaviour on missing IDs is FAIL
+
+        :param mix_ids: One or more mix_ids, usually associated to an artist radio or mix
+        :param validate: Validate if the request was completed successfully
+        :return: True if request was successful, False otherwise. If 'validate', added mixes will be checked.
+        """
+        mix_ids = list_validate(mix_ids)
+
+        # Prepare request parameters
+        params = {"mixIds": ",".join(mix_ids), "onArtifactNotFound": "FAIL"}
+        endpoint = "favorites/mixes/add"
+
+        # Send request
+        response = self.requests.request(
+            method="PUT",
+            path=endpoint,
+            base_url=self.session.config.api_v2_location,
+            params=params,
+        )
+
+        if validate:
+            # Check if all requested mix IDs are in the added items
+            json_obj = response.json()
+            added_items = set(json_obj.get("addedItems", []))
+            return set(mix_ids).issubset(added_items)
+        else:
+            return response.ok
+
     def remove_artist(self, artist_id: str) -> bool:
         """Removes a track from the users favorites.
 
         :param artist_id: TIDAL's identifier of the artist.
         :return: A boolean indicating whether the request was successful or not.
         """
+        if isinstance(artist_id, list):
+            return False
         return self.requests.request(
             "DELETE", f"{self.base_url}/artists/{artist_id}"
         ).ok
@@ -402,17 +478,17 @@ class Favorites:
         :param album_id: TIDAL's identifier of the album
         :return: A boolean indicating whether the request was successful or not.
         """
+        if isinstance(album_id, list):
+            return False
         return self.requests.request("DELETE", f"{self.base_url}/albums/{album_id}").ok
 
-    def remove_playlist(self, playlist_id: str) -> bool:
-        """Removes a playlist from the users favorites.
+    def remove_playlist(self, playlist_id: list[str] | str) -> bool:
+        """Removes one or more playlists from the users favorites.
 
         :param playlist_id: TIDAL's identifier of the playlist.
         :return: A boolean indicating whether the request was successful or not.
         """
-        return self.requests.request(
-            "DELETE", f"{self.base_url}/playlists/{playlist_id}"
-        ).ok
+        return self.remove_folders_playlists(playlist_id, type="playlist")
 
     def remove_track(self, track_id: str) -> bool:
         """Removes a track from the users favorites.
@@ -420,6 +496,8 @@ class Favorites:
         :param track_id: TIDAL's identifier of the track.
         :return: A boolean indicating whether the request was successful or not.
         """
+        if isinstance(track_id, list):
+            return False
         return self.requests.request("DELETE", f"{self.base_url}/tracks/{track_id}").ok
 
     def remove_video(self, video_id: str) -> bool:
@@ -428,11 +506,43 @@ class Favorites:
         :param video_id: TIDAL's identifier of the video.
         :return: A boolean indicating whether the request was successful or not.
         """
+        if isinstance(video_id, list):
+            return False
         return self.requests.request("DELETE", f"{self.base_url}/videos/{video_id}").ok
 
-    def remove_folders_playlists(self, trns: [str], type: str = "folder") -> bool:
-        """Removes one or more folders or playlists from the users favourites, using the
-        v2 endpoint.
+    def remove_mixes(self, mix_ids: list[str] | str, validate: bool = False) -> bool:
+        """Remove one or more mixes (e.g. artist or track mixes) from the user's favorites (v2 endpoint).
+
+        :param mix_ids: One or more mix IDs (typically artist or track radios)
+        :param validate: Validate if the request was completed successfull
+        :return: True if request was successful, False otherwise. If 'validate', deleted mixes will be checked.
+        """
+        mix_ids = list_validate(mix_ids)
+
+        # Prepare request parameters
+        params = {"mixIds": ",".join(mix_ids), "onArtifactNotFound": "FAIL"}
+        endpoint = "favorites/mixes/remove"
+
+        # Send request
+        response = self.requests.request(
+            method="PUT",
+            path=endpoint,
+            base_url=self.session.config.api_v2_location,
+            params=params,
+        )
+
+        if validate:
+            # Check if all requested mix IDs are in the deleted items
+            json_obj = response.json()
+            deleted_items = set(json_obj.get("deletedItems", []))
+            return set(mix_ids).issubset(deleted_items)
+        else:
+            return response.ok
+
+    def remove_folders_playlists(
+        self, trns: list[str] | str, type: str = "folder"
+    ) -> bool:
+        """Removes one or more folders or playlists from the users favourites (v2 endpoint)
 
         :param trns: List of folder (or playlist) trns to be deleted
         :param type: Type of trn: as string, either `folder` or `playlist`. Default `folder`
@@ -450,12 +560,14 @@ class Favorites:
                 trns_full.append(f"trn:{type}:{trn}")
         params = {"trns": ",".join(trns_full)}
         endpoint = "my-collection/playlists/folders/remove"
-        return self.requests.request(
+
+        response = self.requests.request(
             method="PUT",
             path=endpoint,
             base_url=self.session.config.api_v2_location,
             params=params,
-        ).ok
+        )
+        return response.ok
 
     def artists(
         self,
@@ -517,12 +629,12 @@ class Favorites:
 
     def playlists(
         self,
-        limit: Optional[int] = None,
+        limit: Optional[int] = 50,
         offset: int = 0,
         order: Optional[PlaylistOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
-        """Get the users favorite playlists.
+        """Get the users favorite playlists (v2 endpoint)
 
         :param limit: Optional; The amount of playlists you want returned.
         :param offset: The index of the first playlist you want included.
@@ -530,16 +642,25 @@ class Favorites:
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
         :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite playlists.
         """
-        params = {"limit": limit, "offset": offset}
+        params = {
+            "folderId": "root",
+            "offset": offset,
+            "limit": limit,
+            "includeOnly": "",
+        }
         if order:
             params["order"] = order.value
         if order_direction:
             params["orderDirection"] = order_direction.value
 
+        endpoint = "my-collection/playlists/folders"
         return cast(
             List["Playlist"],
-            self.requests.map_request(
-                f"{self.base_url}/playlists",
+            self.session.request.map_request(
+                url=urljoin(
+                    self.session.config.api_v2_location,
+                    endpoint,
+                ),
                 params=params,
                 parse=self.session.parse_playlist,
             ),
