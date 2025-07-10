@@ -2,6 +2,19 @@
 
 History
 =======
+v0.8.4
+------
+* Album: Add UPC barcode, genre URL for tidal tracks - tehkillerbee_
+* Remove Python 2 cruft - C0rn3j_
+* Adhere to typing standards and mark Python current versions as supported - C0rn3j_
+* Add Track.get_radio_mix and Artist.get_radio_mix to get radio as Mix - tehkillerbee_, Nokse22_
+* Consistent use of path file open - tehkillerbee_
+* CI: Fix branch syntax, bump action and python versions to current, fix indent - C0rn3j_
+* Implement sorting for remaining favourites + playlists nilathedragon_
+* Feature/v2 endpoints by tehkillerbee_
+* Feature/origin album cover by tehkillerbee_
+* Validate returned tracks (isrc) and skip invalid results tehkillerbee_
+
 v0.8.3
 ------
 * Extended file extension detection to properly detect M4A files. - exislow_
@@ -236,6 +249,7 @@ v0.6.2
 .. _M4TH1EU: https://github.com/M4TH1EU
 .. _GioF71: https://github.com/GioF71
 .. _TooYoungTooSimp: https://github.com/TooYoungTooSimp
-
-
+.. _C0rn3j: https://github.com/C0rn3j
+.. _Nokse22: https://github.com/Nokse22
+.. _nilathedragon: https://github.com/nilathedragon
 
