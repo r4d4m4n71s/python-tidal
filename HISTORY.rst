@@ -11,9 +11,12 @@ v0.8.4
 * Consistent use of path file open - tehkillerbee_
 * CI: Fix branch syntax, bump action and python versions to current, fix indent - C0rn3j_
 * Implement sorting for remaining favourites + playlists nilathedragon_
-* Feature/v2 endpoints by tehkillerbee_
-* Feature/origin album cover by tehkillerbee_
-* Validate returned tracks (isrc) and skip invalid results tehkillerbee_
+* Feature: Switch to v2 endpoint for playlist get/add/delete. tehkillerbee_
+* Add support for album, track, artist batch additions. Add support for add/delete mixes and radios to favorites. (Fixes #336, #337, #339) tehkillerbee_
+* Test: List ordering when getting tracks, items, playlist, mixes tehkillerbee_
+* Test: Add, remove favorite mix. Add remove artist, album, playlist, track (multiple at a time) tehkillerbee_
+* Feature: Get origin album cover by tehkillerbee_
+* Fix: Validate returned tracks (isrc) and skip invalid results tehkillerbee_
 
 v0.8.3
 ------
