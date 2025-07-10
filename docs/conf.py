@@ -23,7 +23,7 @@ copyright = "2014-%Y, The tidalapi Developers"
 author = "The tidalapi Developers"
 
 # The full version, including alpha/beta/rc tags
-release = "0.8.3"
+release = "0.8.4"
 
 
 # -- General configuration ---------------------------------------------------
