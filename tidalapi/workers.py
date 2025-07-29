@@ -36,9 +36,9 @@ def get_items(
                     (
                         func,
                         offset,
-                        *args,
                         chunk_size,  # limit
                         offset,  # offset
+                        *args,  # extra args (e.g. order, order_direction)
                     )
                     for offset in offsets
                 ],
