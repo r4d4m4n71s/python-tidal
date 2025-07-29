@@ -15,11 +15,8 @@ def get_items(
     chunk_size: int = 50,
     processes: int = 5,
 ):
-    """
-    This function performs pagination on a function that supports
-    `limit`/`offset` parameters and it runs API requests in parallel to speed
-    things up.
-    """
+    """This function performs pagination on a function that supports `limit`/`offset`
+    parameters and it runs API requests in parallel to speed things up."""
     items = []
     offsets = [-chunk_size]
     remaining = chunk_size * processes

@@ -549,7 +549,7 @@ class Favorites:
         order: Optional[ArtistOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Artist"]:
-        """Get the users favorite artists, using pagination
+        """Get the users favorite artists, using pagination.
 
         :param order: Optional; A :class:`ArtistOrder` describing the ordering type when returning the user favorite artists. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
@@ -592,7 +592,7 @@ class Favorites:
         order: Optional[AlbumOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Album"]:
-        """Get the users favorite albums, using pagination
+        """Get the users favorite albums, using pagination.
 
         :param order: Optional; A :class:`AlbumOrder` describing the ordering type when returning the user favorite albums. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
@@ -633,7 +633,8 @@ class Favorites:
         order: Optional[PlaylistOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
-        """Get the users favorite playlists relative to the root folder, using pagination
+        """Get the users favorite playlists relative to the root folder, using
+        pagination.
 
         :param order: Optional; A :class:`PlaylistOrder` describing the ordering type when returning the user favorite playlists. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
@@ -728,7 +729,8 @@ class Favorites:
         order: Optional[ItemOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
-        """Get the users favorite playlists relative to the root folder, using pagination
+        """Get the users favorite playlists relative to the root folder, using
+        pagination.
 
         :param order: Optional; A :class:`ItemOrder` describing the ordering type when returning the user favorite tracks. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
