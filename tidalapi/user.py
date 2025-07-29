@@ -37,6 +37,7 @@ from tidalapi.types import (
     PlaylistOrder,
     VideoOrder,
 )
+from tidalapi.workers import get_items
 
 if TYPE_CHECKING:
     from tidalapi.album import Album
@@ -543,6 +544,19 @@ class Favorites:
         )
         return response.ok
 
+    def artists_paginated(
+        self,
+        order: Optional[ArtistOrder] = None,
+        order_direction: Optional[OrderDirection] = None,
+    ) -> List["Artist"]:
+        """Get the users favorite artists, using pagination
+
+        :param order: Optional; A :class:`ArtistOrder` describing the ordering type when returning the user favorite artists. eg.: "NAME, "DATE"
+        :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
+        :return: A :class:`list` :class:`~tidalapi.artist.Artist` objects containing the favorite artists.
+        """
+        return get_items(self.session.user.favorites.artists, order, order_direction)
+
     def artists(
         self,
         limit: Optional[int] = None,
@@ -573,6 +587,19 @@ class Favorites:
             ),
         )
 
+    def albums_paginated(
+        self,
+        order: Optional[AlbumOrder] = None,
+        order_direction: Optional[OrderDirection] = None,
+    ) -> List["Album"]:
+        """Get the users favorite albums, using pagination
+
+        :param order: Optional; A :class:`AlbumOrder` describing the ordering type when returning the user favorite albums. eg.: "NAME, "DATE"
+        :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
+        :return: A :class:`list` :class:`~tidalapi.album.Album` objects containing the favorite albums.
+        """
+        return get_items(self.session.user.favorites.albums, order, order_direction)
+
     def albums(
         self,
         limit: Optional[int] = None,
@@ -601,6 +628,19 @@ class Favorites:
             ),
         )
 
+    def playlists_paginated(
+        self,
+        order: Optional[PlaylistOrder] = None,
+        order_direction: Optional[OrderDirection] = None,
+    ) -> List["Playlist"]:
+        """Get the users favorite playlists relative to the root folder, using pagination
+
+        :param order: Optional; A :class:`PlaylistOrder` describing the ordering type when returning the user favorite playlists. eg.: "NAME, "DATE"
+        :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
+        :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite playlists.
+        """
+        return get_items(self.session.user.favorites.playlists, order, order_direction)
+
     def playlists(
         self,
         limit: Optional[int] = 50,
@@ -609,6 +649,7 @@ class Favorites:
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
         """Get the users favorite playlists (v2 endpoint), relative to the root folder
+        This function is limited to 50 by TIDAL, requiring pagination.
 
         :param limit: Optional; The number of playlists you want returned (Note: Cannot exceed 50)
         :param offset: The index of the first playlist to fetch
@@ -681,6 +722,19 @@ class Favorites:
                 parse=self.session.parse_folder,
             ),
         )
+
+    def tracks_paginated(
+        self,
+        order: Optional[ItemOrder] = None,
+        order_direction: Optional[OrderDirection] = None,
+    ) -> List["Playlist"]:
+        """Get the users favorite playlists relative to the root folder, using pagination
+
+        :param order: Optional; A :class:`ItemOrder` describing the ordering type when returning the user favorite tracks. eg.: "NAME, "DATE"
+        :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
+        :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite tracks.
+        """
+        return get_items(self.session.user.favorites.tracks, order, order_direction)
 
     def tracks(
         self,
