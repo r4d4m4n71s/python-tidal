@@ -650,14 +650,14 @@ class Favorites:
             "folderId": "root",
             "offset": offset,
             "limit": limit,
-            "includeOnly": "",
+            "includeOnly": "PLAYLIST",  # Include only PLAYLIST types, FOLDER will be ignored
         }
         if order:
             params["order"] = order.value
         if order_direction:
             params["orderDirection"] = order_direction.value
 
-        endpoint = "my-collection/playlists/folders"
+        endpoint = "my-collection/playlists"
         return cast(
             List["Playlist"],
             self.session.request.map_request(
