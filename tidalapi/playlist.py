@@ -88,12 +88,14 @@ class Playlist:
                 self._etag = request.headers["etag"]
                 self.parse(request.json())
 
-    def parse(self, json_obj: JsonObj) -> "Playlist":
+    def parse(self, obj: JsonObj) -> "Playlist":
         """Parses a playlist from tidal, replaces the current playlist object.
 
-        :param json_obj: Json data returned from api.tidal.com containing a playlist
+        :param obj: Json data returned from api.tidal.com containing a playlist
         :return: Returns a copy of the original :exc: 'Playlist': object
         """
+        json_obj = obj.get("data", obj)
+
         self.id = json_obj["uuid"]
         self.trn = f"trn:playlist:{self.id}"
         self.name = json_obj["title"]
