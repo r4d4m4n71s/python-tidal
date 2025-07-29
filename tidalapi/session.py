@@ -361,7 +361,7 @@ class Session:
     def parse_playlist(self, obj: JsonObj) -> playlist.Playlist:
         """Parse a playlist from the given response."""
         # Note: When parsing playlists from v2 response, "data" field must be parsed
-        return self.playlist().parse(obj["data"])
+        return self.playlist().parse(obj.get("data", obj))
 
     def parse_folder(self, obj: JsonObj) -> playlist.Folder:
         """Parse an album from the given response."""
