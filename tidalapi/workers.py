@@ -1,10 +1,18 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
+
+log = logging.getLogger(__name__)
 
 
 def func_wrapper(args):
     (f, offset, *args) = args
-    items = f(*args)
+    try:
+        items = f(*args)
+    except Exception as e:
+        log.error("Failed to run %s(offset=%d, args=%s)", f, offset, args)
+        log.exception(e)
+        items = []
     return list((i + offset, item) for i, item in enumerate(items))
 
 
@@ -13,7 +21,7 @@ def get_items(
     *args,
     parse: Callable = lambda _: _,
     chunk_size: int = 50,
-    processes: int = 5,
+    processes: int = 2,
 ):
     """This function performs pagination on a function that supports `limit`/`offset`
     parameters and it runs API requests in parallel to speed things up."""
