@@ -68,10 +68,10 @@ def test_get_user_playlists(session):
 def test_get_playlist_folders(session):
     folder = session.user.create_folder(title="testfolder")
     assert folder
-    folder_ids = [folder.id for folder in session.user.playlist_folders()]
+    folder_ids = [folder.id for folder in session.user.favorites.playlist_folders()]
     assert folder.id in folder_ids
     folder.remove()
-    folder_ids = [folder.id for folder in session.user.playlist_folders()]
+    folder_ids = [folder.id for folder in session.user.favorites.playlist_folders()]
     assert folder.id not in folder_ids
 
 
