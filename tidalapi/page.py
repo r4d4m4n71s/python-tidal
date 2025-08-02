@@ -285,18 +285,23 @@ class SimpleList(PageCategory):
         item_type = json_obj["type"]
         # item_data = json_obj["data"]
 
-        if item_type == "PLAYLIST":
-            return self.session.parse_playlist(json_obj)
-        # elif item_type == "VIDEO":
-        #     return self.session.parse_video(item_data)
-        # elif item_type == "TRACK":
-        #     return self.session.parse_track(item_data)
-        # elif item_type == "ARTIST":
-        #     return self.session.parse_artist(item_data)
-        # elif item_type == "ALBUM":
-        #     return self.session.parse_album(item_data)
-        # elif item_type == "MIX":
-        #     return self.session.parse_v2_mix(json_obj)
+        print(item_type)
+
+        try:
+            if item_type == "PLAYLIST":
+                return self.session.parse_playlist(json_obj)
+            elif item_type == "VIDEO":
+                return self.session.parse_video(json_obj["data"])
+            elif item_type == "TRACK":
+                return self.session.parse_track(json_obj["data"])
+            elif item_type == "ARTIST":
+                return self.session.parse_artist(json_obj["data"])
+            elif item_type == "ALBUM":
+                return self.session.parse_album(json_obj["data"])
+            elif item_type == "MIX":
+                return self.session.parse_mix(json_obj["data"])
+        except Exception as e:
+            print(e)
         # raise NotImplementedError
         return None
 
