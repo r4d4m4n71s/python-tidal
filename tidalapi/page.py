@@ -42,7 +42,6 @@ if TYPE_CHECKING:
     from tidalapi.request import Requests
     from tidalapi.session import Session
 
-from . import album, artist, media, mix, playlist
 
 PageCategories = Union[
     "Album",
@@ -55,6 +54,15 @@ PageCategories = Union[
 ]
 
 AllCategories = Union["Artist", PageCategories]
+
+PageCategoriesV2 = Union[
+    "TrackList",
+    "ShortcutList",
+    "HorizontalList",
+    "HorizontalListWithContext",
+]
+
+AllCategoriesV2 = Union[PageCategoriesV2]
 
 
 class Page:
@@ -180,7 +188,6 @@ class PageCategory:
     def parse(self, json_obj: JsonObj) -> AllCategories:
         result = None
         category_type = json_obj["type"]
-        print(category_type)
         if category_type in ("PAGE_LINKS_CLOUD", "PAGE_LINKS"):
             category: PageCategories = PageLinks(self.session)
         elif category_type in ("FEATURED_PROMOTIONS", "MULTIPLE_TOP_PROMOTIONS"):
@@ -237,24 +244,33 @@ class PageCategoryV2:
     def __init__(self, session: "Session"):
         self.session = session
         self.request = session.request
+        self.item_type_parser: Dict[str, Callable[..., Any]] = {
+            "PLAYLIST": self.session.parse_playlist,
+            "VIDEO": self.session.parse_video,
+            "TRACK": self.session.parse_track,
+            "ARTIST": self.session.parse_artist,
+            "ALBUM": self.session.parse_album,
+            "MIX": self.session.parse_v2_mix,
+        }
 
-    def parse(self, json_obj: JsonObj) -> AllCategories:
+    def parse(self, json_obj: JsonObj) -> AllCategoriesV2:
         category_type = json_obj["type"]
-        print(category_type)
         if category_type == "TRACK_LIST":
             category = TrackList(self.session)
         elif category_type == "SHORTCUT_LIST":
             category = ShortcutList(self.session)
         elif category_type == "HORIZONTAL_LIST":
             category = HorizontalList(self.session)
+        elif category_type == "HORIZONTAL_LIST_WITH_CONTEXT":
+            category = HorizontalListWithContext(self.session)
         else:
             raise NotImplementedError(f"PageType {category_type} not implemented")
 
         return category.parse(json_obj)
 
 
-class SimpleList(PageCategory):
-    """A simple list of different items for the home page V2"""
+class SimpleList(PageCategoryV2):
+    """A simple list of different items for the home page V2."""
 
     items: Optional[List[Any]] = None
 
@@ -273,35 +289,23 @@ class SimpleList(PageCategory):
 
     def get_item(self, json_obj):
         item_type = json_obj["type"]
-        # item_data = json_obj["data"]
-
-        print(item_type)
 
         try:
-            if item_type == "PLAYLIST":
-                return self.session.parse_playlist(json_obj)
-            elif item_type == "VIDEO":
-                return self.session.parse_video(json_obj["data"])
-            elif item_type == "TRACK":
-                return self.session.parse_track(json_obj["data"])
-            elif item_type == "ARTIST":
-                return self.session.parse_artist(json_obj["data"])
-            elif item_type == "ALBUM":
-                return self.session.parse_album(json_obj["data"])
-            # elif item_type == "MIX":
-            #     return self.session.mix(json_obj["data"]["id"])
-        except Exception as e:
-            print(e)
-        # raise NotImplementedError
-        return None
+            if item_type in self.item_type_parser.keys():
+                return self.item_type_parser[item_type](json_obj["data"])
+            else:
+                raise NotImplementedError(f"PageItemType {item_type} not implemented")
+        except TypeError as e:
+            print(f"Exception {e} while parsing SimpleList object.")
 
 
-class HorizontalList(SimpleList):
-    ...
+class HorizontalList(SimpleList): ...
 
 
-class ShortcutList(SimpleList):
-    ...
+class HorizontalListWithContext(HorizontalList): ...
+
+
+class ShortcutList(SimpleList): ...
 
 
 class FeaturedItems(PageCategory):
@@ -383,7 +387,7 @@ class ItemList(PageCategory):
 
 
 class TrackList(PageCategory):
-    """A list of track from TIDAL."""
+    """A list of tracks from TIDAL."""
 
     items: Optional[List[Any]] = None
 
@@ -457,7 +461,9 @@ class PageItem:
         self.text = json_obj["text"]
         self.featured = bool(json_obj["featured"])
 
-    def get(self) -> Union["Artist", "Playlist", "Track", "UserPlaylist", "Video"]:
+    def get(
+        self,
+    ) -> Union["Artist", "Playlist", "Track", "UserPlaylist", "Video", "Album"]:
         """Retrieve the PageItem with the artifact_id matching the type.
 
         :return: The fully parsed item, e.g. :class:`.Playlist`, :class:`.Video`, :class:`.Track`
