@@ -70,6 +70,7 @@ class Page:
     _categories_iter: Optional[Iterator["AllCategories"]] = None
     _items_iter: Optional[Iterator[Callable[..., Any]]] = None
     page_category: "PageCategory"
+    page_category_v2: "PageCategoryV2"
     request: "Requests"
 
     def __init__(self, session: "Session", title: str):
@@ -77,6 +78,7 @@ class Page:
         self.categories = None
         self.title = title
         self.page_category = PageCategory(session)
+        self.page_category_v2 = PageCategoryV2(session)
 
     def __iter__(self) -> "Page":
         if self.categories is None:
@@ -117,12 +119,9 @@ class Page:
         return copy.copy(self)
 
     def parseV2(self, json_obj: JsonObj) -> "Page":
-        """Goes through everything in the page, and gets the title and adds all the rows
-        to the categories field :param json_obj: The json to be parsed :return: A copy
-        of the Page that you can use to browse all the items."""
         self.categories = []
         for item in json_obj["items"]:
-            page_item = self.page_category.parse(item)
+            page_item = self.page_category_v2.parse(item)
             self.categories.append(page_item)
 
         return copy.copy(self)
@@ -181,6 +180,7 @@ class PageCategory:
     def parse(self, json_obj: JsonObj) -> AllCategories:
         result = None
         category_type = json_obj["type"]
+        print(category_type)
         if category_type in ("PAGE_LINKS_CLOUD", "PAGE_LINKS"):
             category: PageCategories = PageLinks(self.session)
         elif category_type in ("FEATURED_PROMOTIONS", "MULTIPLE_TOP_PROMOTIONS"):
@@ -209,10 +209,6 @@ class PageCategory:
         elif category_type == "SOCIAL":
             json_obj["items"] = json_obj["socialProfiles"]
             category = LinkList(self.session)
-        elif category_type == "SHORTCUT_LIST":
-            category = ShortcutList(self.session)
-        elif category_type == "HORIZONTAL_LIST":
-            category = HorizontalList(self.session)
         else:
             raise NotImplementedError(f"PageType {category_type} not implemented")
 
@@ -230,6 +226,41 @@ class PageCategory:
             if api_path and self._more
             else None
         )
+
+
+class PageCategoryV2:
+    type = None
+    title: Optional[str] = None
+    description: Optional[str] = ""
+    request: "Requests"
+
+    def __init__(self, session: "Session"):
+        self.session = session
+        self.request = session.request
+        self.item_types: Dict[str, Callable[..., Any]] = {
+            "ALBUM_LIST": self.session.parse_album,
+            "ARTIST_LIST": self.session.parse_artist,
+            "TRACK_LIST": self.session.parse_track,
+            "PLAYLIST_LIST": self.session.parse_playlist,
+            "VIDEO_LIST": self.session.parse_video,
+            "MIX_LIST": self.session.parse_mix,
+        }
+
+    def parse(self, json_obj: JsonObj) -> AllCategories:
+        category_type = json_obj["type"]
+        print(category_type)
+        # if category_type in self.item_types.keys():
+        #     category = ItemListV2(self.session)
+        # el
+        if category_type == "SHORTCUT_LIST":
+            category = ShortcutList(self.session)
+        elif category_type == "HORIZONTAL_LIST":
+            category = HorizontalList(self.session)
+        else:
+            return None
+            # raise NotImplementedError(f"PageType {category_type} not implemented")
+
+        return category.parse(json_obj)
 
 
 class SimpleList(PageCategory):
@@ -252,21 +283,22 @@ class SimpleList(PageCategory):
 
     def get_item(self, json_obj):
         item_type = json_obj["type"]
-        item_data = json_obj["data"]
+        # item_data = json_obj["data"]
 
         if item_type == "PLAYLIST":
-            return self.session.parse_playlist(item_data)
-        elif item_type == "VIDEO":
-            return self.session.parse_video(item_data)
-        elif item_type == "TRACK":
-            return self.session.parse_track(item_data)
-        elif item_type == "ARTIST":
-            return self.session.parse_artist(item_data)
-        elif item_type == "ALBUM":
-            return self.session.parse_album(item_data)
-        elif item_type == "MIX":
-            return self.session.parse_mix(item_data)
-        raise NotImplementedError
+            return self.session.parse_playlist(json_obj)
+        # elif item_type == "VIDEO":
+        #     return self.session.parse_video(item_data)
+        # elif item_type == "TRACK":
+        #     return self.session.parse_track(item_data)
+        # elif item_type == "ARTIST":
+        #     return self.session.parse_artist(item_data)
+        # elif item_type == "ALBUM":
+        #     return self.session.parse_album(item_data)
+        # elif item_type == "MIX":
+        #     return self.session.parse_v2_mix(json_obj)
+        # raise NotImplementedError
+        return None
 
 
 class HorizontalList(SimpleList):
@@ -351,6 +383,33 @@ class ItemList(PageCategory):
             raise NotImplementedError("PageType {} not implemented".format(item_type))
 
         self.items = self.request.map_json(json_obj[list_key], parse, session)
+
+        return copy.copy(self)
+
+
+class ItemListV2(PageCategory):
+    """A list of items from TIDAL, can be a list of mixes, for example, or a list of
+    playlists and mixes in some cases."""
+
+    items: Optional[List[Any]] = None
+
+    def parse(self, json_obj: JsonObj) -> "ItemListV2":
+        """Parse a list of items on TIDAL from the pages endpoints.
+
+        :param json_obj: The json from TIDAL to be parsed
+        :return: A copy of the ItemListV2 with a list of items
+        """
+        self.title = json_obj["title"]
+        item_type = json_obj["type"]
+        session: Optional["Session"] = None
+        parse: Optional[Callable[..., Any]] = None
+
+        if item_type in self.item_types.keys():
+            parse = self.item_types[item_type]
+        else:
+            raise NotImplementedError("PageType {} not implemented".format(item_type))
+
+        self.items = self.request.map_json(json_obj["items"], parse, session)
 
         return copy.copy(self)
 
