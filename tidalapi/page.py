@@ -237,28 +237,18 @@ class PageCategoryV2:
     def __init__(self, session: "Session"):
         self.session = session
         self.request = session.request
-        self.item_types: Dict[str, Callable[..., Any]] = {
-            "ALBUM_LIST": self.session.parse_album,
-            "ARTIST_LIST": self.session.parse_artist,
-            "TRACK_LIST": self.session.parse_track,
-            "PLAYLIST_LIST": self.session.parse_playlist,
-            "VIDEO_LIST": self.session.parse_video,
-            "MIX_LIST": self.session.parse_mix,
-        }
 
     def parse(self, json_obj: JsonObj) -> AllCategories:
         category_type = json_obj["type"]
         print(category_type)
-        # if category_type in self.item_types.keys():
-        #     category = ItemListV2(self.session)
-        # el
-        if category_type == "SHORTCUT_LIST":
+        if category_type == "TRACK_LIST":
+            category = TrackList(self.session)
+        elif category_type == "SHORTCUT_LIST":
             category = ShortcutList(self.session)
         elif category_type == "HORIZONTAL_LIST":
             category = HorizontalList(self.session)
         else:
-            return None
-            # raise NotImplementedError(f"PageType {category_type} not implemented")
+            raise NotImplementedError(f"PageType {category_type} not implemented")
 
         return category.parse(json_obj)
 
@@ -298,8 +288,8 @@ class SimpleList(PageCategory):
                 return self.session.parse_artist(json_obj["data"])
             elif item_type == "ALBUM":
                 return self.session.parse_album(json_obj["data"])
-            elif item_type == "MIX":
-                return self.session.parse_mix(json_obj["data"])
+            # elif item_type == "MIX":
+            #     return self.session.mix(json_obj["data"]["id"])
         except Exception as e:
             print(e)
         # raise NotImplementedError
@@ -392,29 +382,23 @@ class ItemList(PageCategory):
         return copy.copy(self)
 
 
-class ItemListV2(PageCategory):
-    """A list of items from TIDAL, can be a list of mixes, for example, or a list of
-    playlists and mixes in some cases."""
+class TrackList(PageCategory):
+    """A list of track from TIDAL."""
 
     items: Optional[List[Any]] = None
 
-    def parse(self, json_obj: JsonObj) -> "ItemListV2":
-        """Parse a list of items on TIDAL from the pages endpoints.
+    def parse(self, json_obj: JsonObj) -> "TrackList":
+        """Parse a list of tracks on TIDAL from the pages endpoints.
 
         :param json_obj: The json from TIDAL to be parsed
-        :return: A copy of the ItemListV2 with a list of items
+        :return: A copy of the TrackList with a list of items
         """
         self.title = json_obj["title"]
-        item_type = json_obj["type"]
-        session: Optional["Session"] = None
-        parse: Optional[Callable[..., Any]] = None
 
-        if item_type in self.item_types.keys():
-            parse = self.item_types[item_type]
-        else:
-            raise NotImplementedError("PageType {} not implemented".format(item_type))
+        self.items = []
 
-        self.items = self.request.map_json(json_obj["items"], parse, session)
+        for item in json_obj["items"]:
+            self.items.append(self.session.parse_track(item["data"]))
 
         return copy.copy(self)
 
