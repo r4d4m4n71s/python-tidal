@@ -42,6 +42,8 @@ if TYPE_CHECKING:
     from tidalapi.request import Requests
     from tidalapi.session import Session
 
+from . import album, artist, media, mix, playlist
+
 PageCategories = Union[
     "Album",
     "PageLinks",
@@ -110,6 +112,17 @@ class Page:
         self.categories = []
         for row in json_obj["rows"]:
             page_item = self.page_category.parse(row["modules"][0])
+            self.categories.append(page_item)
+
+        return copy.copy(self)
+
+    def parseV2(self, json_obj: JsonObj) -> "Page":
+        """Goes through everything in the page, and gets the title and adds all the rows
+        to the categories field :param json_obj: The json to be parsed :return: A copy
+        of the Page that you can use to browse all the items."""
+        self.categories = []
+        for item in json_obj["items"]:
+            page_item = self.page_category.parse(item)
             self.categories.append(page_item)
 
         return copy.copy(self)
@@ -196,6 +209,10 @@ class PageCategory:
         elif category_type == "SOCIAL":
             json_obj["items"] = json_obj["socialProfiles"]
             category = LinkList(self.session)
+        elif category_type == "SHORTCUT_LIST":
+            category = ShortcutList(self.session)
+        elif category_type == "HORIZONTAL_LIST":
+            category = HorizontalList(self.session)
         else:
             raise NotImplementedError(f"PageType {category_type} not implemented")
 
@@ -213,6 +230,51 @@ class PageCategory:
             if api_path and self._more
             else None
         )
+
+
+class SimpleList(PageCategory):
+    """A simple list of different items for the home page V2"""
+
+    items: Optional[List[Any]] = None
+
+    def __init__(self, session: "Session"):
+        super().__init__(session)
+        self.session = session
+
+    def parse(self, json_obj: JsonObj) -> "SimpleList":
+        self.items = []
+        self.title = json_obj["title"]
+
+        for item in json_obj["items"]:
+            self.items.append(self.get_item(item))
+
+        return self
+
+    def get_item(self, json_obj):
+        item_type = json_obj["type"]
+        item_data = json_obj["data"]
+
+        if item_type == "PLAYLIST":
+            return self.session.parse_playlist(item_data)
+        elif item_type == "VIDEO":
+            return self.session.parse_video(item_data)
+        elif item_type == "TRACK":
+            return self.session.parse_track(item_data)
+        elif item_type == "ARTIST":
+            return self.session.parse_artist(item_data)
+        elif item_type == "ALBUM":
+            return self.session.parse_album(item_data)
+        elif item_type == "MIX":
+            return self.session.parse_mix(item_data)
+        raise NotImplementedError
+
+
+class HorizontalList(SimpleList):
+    ...
+
+
+class ShortcutList(SimpleList):
+    ...
 
 
 class FeaturedItems(PageCategory):
