@@ -118,19 +118,17 @@ class Page:
         """Goes through everything in the page, and gets the title and adds all the rows
         to the categories field :param json_obj: The json to be parsed :return: A copy
         of the Page that you can use to browse all the items."""
-        self.title = json_obj["title"]
         self.categories = []
-        for row in json_obj["rows"]:
-            page_item = self.page_category.parse(row["modules"][0])
-            self.categories.append(page_item)
 
-        return copy.copy(self)
-
-    def parseV2(self, json_obj: JsonObj) -> "Page":
-        self.categories = []
-        for item in json_obj["items"]:
-            page_item = self.page_category_v2.parse(item)
-            self.categories.append(page_item)
+        if json_obj.get("rows"):
+            self.title = json_obj["title"]
+            for row in json_obj["rows"]:
+                page_item = self.page_category.parse(row["modules"][0])
+                self.categories.append(page_item)
+        else:
+            for item in json_obj["items"]:
+                page_item = self.page_category_v2.parse(item)
+                self.categories.append(page_item)
 
         return copy.copy(self)
 
