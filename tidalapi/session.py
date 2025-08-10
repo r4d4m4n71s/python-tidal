@@ -1096,7 +1096,7 @@ class Session:
             base_url=self.config.api_v2_location,
             params=params,
         ).json()
-        return self.page.parseV2(json_obj)
+        return self.page.parse(json_obj)
 
     def explore(self) -> page.Page:
         """
