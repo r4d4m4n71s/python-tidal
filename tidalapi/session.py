@@ -268,9 +268,10 @@ class Session:
     refresh_token: Optional[str] = None
     #: The type of access token, e.g. Bearer
     token_type: Optional[str] = None
-    #: The id for a TIDAL session, you also need this to use load_oauth_session
+    #: The session id for a TIDAL session, you also need this to use load_oauth_session
     session_id: Optional[str] = None
     country_code: Optional[str] = None
+    locale: Optional[str] = None
     #: A :class:`.User` object containing the currently logged in user.
     user: Optional[Union["FetchedUser", "LoggedInUser", "PlaylistCreator"]] = None
 
@@ -281,15 +282,6 @@ class Session:
         # Objects for keeping the session across all modules.
         self.request = request.Requests(session=self)
         self.genre = genre.Genre(session=self)
-
-        # self.parse_artists = self.artist().parse_artists
-        # self.parse_playlist = self.playlist().parse
-
-        # self.parse_track = self.track().parse_track
-        # self.parse_video = self.video().parse_video
-        # self.parse_media = self.track().parse_media
-        # self.parse_mix = self.mix().parse
-        # self.parse_v2_mix = self.mixv2().parse
 
         self.parse_user = user.User(self, None).parse
         self.page = page.Page(self, "")
@@ -453,6 +445,7 @@ class Session:
 
         self.session_id = json["sessionId"]
         self.country_code = json["countryCode"]
+        self.locale = "en_US"  # TODO Get locale from system configuration
         self.user = user.User(self, user_id=json["userId"]).factory()
 
         return True
@@ -719,6 +712,7 @@ class Session:
         json = session.json()
         self.session_id = json["sessionId"]
         self.country_code = json["countryCode"]
+        self.locale = "en_US"  # TODO Set locale from system configuration
         self.user = user.User(self, user_id=json["userId"]).factory()
         self.is_pkce = is_pkce_token
 
@@ -1094,7 +1088,15 @@ class Session:
 
         :return: A :class:`.Page` object with the :class:`.PageCategory` list from the home page
         """
-        return self.page.get("pages/home")
+        params = {"deviceType": "BROWSER", "locale": self.locale, "platform": "WEB"}
+
+        json_obj = self.request.request(
+            "GET",
+            "home/feed/static",
+            base_url=self.config.api_v2_location,
+            params=params,
+        ).json()
+        return self.page.parseV2(json_obj)
 
     def explore(self) -> page.Page:
         """

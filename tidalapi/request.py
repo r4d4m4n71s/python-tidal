@@ -57,6 +57,7 @@ class Requests(object):
     def __init__(self, session: "Session"):
         # More Android User-Agents here: https://user-agents.net/browsers/android
         self.user_agent = "Mozilla/5.0 (Linux; Android 12; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Safari/537.36"
+        self.client_version = "2025.7.16"
         self.session = session
         self.config = session.config
         self.latest_err_response = requests.Response()
@@ -84,6 +85,9 @@ class Requests(object):
 
         if not headers:
             headers = {}
+
+        if "x-tidal-client-version" not in headers:
+            headers["x-tidal-client-version"] = self.client_version
 
         if "User-Agent" not in headers:
             headers["User-Agent"] = self.user_agent
@@ -170,18 +174,22 @@ class Requests(object):
         return request
 
     def get_latest_err_response(self) -> dict:
-        """Get the latest request Response that resulted in an Exception :return: The
-        request Response that resulted in the Exception, returned as a dict An empty
-        dict will be returned, if no response was returned."""
+        """Get the latest request Response that resulted in an Exception.
+
+        :return: The request Response that resulted in the Exception, returned as a dict
+            An empty dict will be returned, if no response was returned.
+        """
         if self.latest_err_response.content:
             return self.latest_err_response.json()
         else:
             return {}
 
     def get_latest_err_response_str(self) -> str:
-        """Get the latest request response message as a string :return: The contents of
-        the (detailed) error response Response, returned as a string An empty str will
-        be returned, if no response was returned."""
+        """Get the latest request response message as a string.
+
+        :return: The contents of the (detailed) error response, returned as a string An
+            empty str will be returned, if no response was returned.
+        """
         if self.latest_err_response.content:
             resp = self.latest_err_response.json()
             return resp["errors"][0]["detail"]
