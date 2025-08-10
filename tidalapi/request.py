@@ -258,24 +258,3 @@ class Requests(object):
         if parse is None:
             raise ValueError("A parser must be supplied")
         return list(map(parse, items))
-
-    def get_items(self, url: str, parse: Callable[..., Any]) -> List[Any]:
-        """Returns a list of items, used when there are over a 100 items, but TIDAL
-        doesn't always allow more specifying a higher limit.
-
-        Not meant for use outside of this library.
-
-        :param url: TIDAL api endpoint where you get the objects.
-        :param parse: The method that parses the data in the url
-        item_List: List[Any] = []
-        """
-
-        params = {"offset": 0, "limit": 100}
-        remaining = 100
-        item_list: List[Any] = []
-        while remaining == 100:
-            items = self.map_request(url, params=params, parse=parse)
-            remaining = len(items)
-            params["offset"] += 100
-            item_list.extend(items or [])
-        return item_list
