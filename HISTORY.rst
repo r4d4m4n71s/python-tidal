@@ -2,6 +2,15 @@
 
 History
 =======
+v0.8.5
+------
+* Cleanup: Removed deprecated function(s). - tehkillerbee_
+* Feature: MixV2: Add support for parsing mixes originating from PageCategoryV2. - tehkillerbee_
+* Feature: Add support for PageCategoryV2 as used on Home page. - tehkillerbee_, Nokse22_
+* Feature: Add pagination workers from mopidy-tidal - tehkillerbee_, BlackLight_
+* Fix(playlist): Improve v2 endpoint usage. - tehkillerbee_
+* fix(playlist): More robust handling of the passed objects. - BlackLight_
+
 v0.8.4
 ------
 * Album: Add UPC barcode, genre URL for tidal tracks - tehkillerbee_
