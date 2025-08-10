@@ -311,7 +311,7 @@ class PageCategoryV2:
         self.module_id = list_item.get("moduleId")
         self.title = list_item.get("title")
         self.subtitle = list_item.get("subtitle")
-        self.description = list_item.get("description")
+        self.description = list_item.get("description", self.title)
         self._more = More.parse(list_item)
 
     def parse(self, json_obj: JsonObj):
