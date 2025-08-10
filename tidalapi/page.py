@@ -27,6 +27,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Type,
     Union,
     cast,
 )
