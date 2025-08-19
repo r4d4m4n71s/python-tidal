@@ -702,10 +702,14 @@ class Favorites:
         }
         if order:
             params["order"] = order.value
+        else:
+            params["order"] = PlaylistOrder.DateCreated.value
         if order_direction:
             params["orderDirection"] = order_direction.value
+        else:
+            params["orderDirection"] = OrderDirection.Descending.value
 
-        endpoint = "my-collection/playlists"
+        endpoint = "my-collection/playlists/folders"
         return cast(
             List["Playlist"],
             self.session.request.map_request(
