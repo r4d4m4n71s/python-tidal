@@ -18,6 +18,7 @@ Module for parsing TIDAL's pages format found at https://listen.tidal.com/v1/pag
 """
 
 import copy
+import logging
 from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
@@ -64,6 +65,8 @@ PageCategoriesV2 = Union[
 ]
 
 AllCategoriesV2 = Union[PageCategoriesV2]
+
+log = logging.getLogger(__name__)
 
 
 class Page:
@@ -337,13 +340,16 @@ class SimpleList(PageCategoryV2):
         self.items: List[Any] = []
 
     def parse(self, json_obj: "JsonObj"):
-        self.items = [self.get_item(item) for item in json_obj["items"]]
+        self.items = [
+            self.get_item(item) for item in json_obj["items"] if item is not None
+        ]
         return self
 
     def get_item(self, json_obj: "JsonObj") -> Any:
         item_type = json_obj.get("type")
         if item_type not in self.item_types:
-            raise NotImplementedError(f"Item type '{item_type}' not implemented")
+            log.warning(f"Item type '{item_type}' not implemented")
+            return None
 
         return self.item_types[item_type](json_obj["data"])
 

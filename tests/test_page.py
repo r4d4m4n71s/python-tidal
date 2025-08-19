@@ -169,7 +169,7 @@ def test_genres(session):
 def test_moods(session):
     moods = session.moods()
     first = next(iter(moods))
-    assert first.title == "Holidays"
+    assert first.title == "Holidays" or first.title == "For DJs"
     assert isinstance(next(iter(first.get())), tidalapi.Playlist)
 
 

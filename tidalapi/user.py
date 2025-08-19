@@ -51,6 +51,8 @@ if TYPE_CHECKING:
 def list_validate(lst):
     if isinstance(lst, str):
         lst = [lst]
+    if isinstance(lst, int):
+        lst = [str(lst)]
     if len(lst) == 0:
         raise ValueError("An empty list was provided.")
     return lst
@@ -555,7 +557,10 @@ class Favorites:
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
         :return: A :class:`list` :class:`~tidalapi.artist.Artist` objects containing the favorite artists.
         """
-        return get_items(self.session.user.favorites.artists, order, order_direction)
+        count = self.session.user.favorites.get_artists_count()
+        return get_items(
+            self.session.user.favorites.artists, count, order, order_direction
+        )
 
     def artists(
         self,
@@ -587,6 +592,21 @@ class Favorites:
             ),
         )
 
+    def get_artists_count(
+        self,
+    ) -> int:
+        """Get the total number of artists in the user's collection.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the
+        artists without retrieving all of them. The API response contains
+        'totalNumberOfItems', which represents the total items (artists) available.
+        :return: The number of items available.
+        """
+        params = {"limit": 1, "offset": 0}
+
+        json_obj = self.requests.map_request(f"{self.base_url}/artists", params=params)
+        return json_obj.get("totalNumberOfItems", 0)
+
     def albums_paginated(
         self,
         order: Optional[AlbumOrder] = None,
@@ -598,7 +618,10 @@ class Favorites:
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
         :return: A :class:`list` :class:`~tidalapi.album.Album` objects containing the favorite albums.
         """
-        return get_items(self.session.user.favorites.albums, order, order_direction)
+        count = self.session.user.favorites.get_artists_count()
+        return get_items(
+            self.session.user.favorites.albums, count, order, order_direction
+        )
 
     def albums(
         self,
@@ -628,19 +651,36 @@ class Favorites:
             ),
         )
 
+    def get_albums_count(
+        self,
+    ) -> int:
+        """Get the total number of albums in the user's collection.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the albums
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (albums) available.
+        :return: The number of items available.
+        """
+        params = {"limit": 1, "offset": 0}
+
+        json_obj = self.requests.map_request(f"{self.base_url}/albums", params=params)
+        return json_obj.get("totalNumberOfItems", 0)
+
     def playlists_paginated(
         self,
         order: Optional[PlaylistOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
-        """Get the users favorite playlists relative to the root folder, using
-        pagination.
+        """Get the users favorite playlists, using pagination.
 
         :param order: Optional; A :class:`PlaylistOrder` describing the ordering type when returning the user favorite playlists. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
         :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite playlists.
         """
-        return get_items(self.session.user.favorites.playlists, order, order_direction)
+        count = self.session.user.favorites.get_playlists_count()
+        return get_items(
+            self.session.user.favorites.playlists, count, order, order_direction
+        )
 
     def playlists(
         self,
@@ -666,10 +706,14 @@ class Favorites:
         }
         if order:
             params["order"] = order.value
+        else:
+            params["order"] = PlaylistOrder.DateCreated.value
         if order_direction:
             params["orderDirection"] = order_direction.value
+        else:
+            params["orderDirection"] = OrderDirection.Descending.value
 
-        endpoint = "my-collection/playlists"
+        endpoint = "my-collection/playlists/folders"
         return cast(
             List["Playlist"],
             self.session.request.map_request(
@@ -724,19 +768,41 @@ class Favorites:
             ),
         )
 
+    def get_playlists_count(self) -> int:
+        """Get the total number of playlists in the user's root collection.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the
+        playlists without retrieving all of them. The API response contains
+        'totalNumberOfItems', which represents the total playlists available.
+        :return: The number of items available.
+        """
+        params = {"folderId": "root", "offset": 0, "limit": 1, "includeOnly": ""}
+
+        endpoint = "my-collection/playlists/folders"
+        json_obj = self.session.request.map_request(
+            url=urljoin(
+                self.session.config.api_v2_location,
+                endpoint,
+            ),
+            params=params,
+        )
+        return json_obj.get("totalNumberOfItems", 0)
+
     def tracks_paginated(
         self,
         order: Optional[ItemOrder] = None,
         order_direction: Optional[OrderDirection] = None,
     ) -> List["Playlist"]:
-        """Get the users favorite playlists relative to the root folder, using
-        pagination.
+        """Get the users favorite tracks, using pagination.
 
         :param order: Optional; A :class:`ItemOrder` describing the ordering type when returning the user favorite tracks. eg.: "NAME, "DATE"
         :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
         :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite tracks.
         """
-        return get_items(self.session.user.favorites.tracks, order, order_direction)
+        count = self.session.user.favorites.get_tracks_count()
+        return get_items(
+            self.session.user.favorites.tracks, count, order, order_direction
+        )
 
     def tracks(
         self,
@@ -765,6 +831,21 @@ class Favorites:
                 f"{self.base_url}/tracks", params=params, parse=self.session.parse_track
             ),
         )
+
+    def get_tracks_count(
+        self,
+    ) -> int:
+        """Get the total number of tracks in the user's collection.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the tracks
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (tracks) available.
+        :return: The number of items available.
+        """
+        params = {"limit": 1, "offset": 0}
+
+        json_obj = self.requests.map_request(f"{self.base_url}/tracks", params=params)
+        return json_obj.get("totalNumberOfItems", 0)
 
     def videos(
         self,
