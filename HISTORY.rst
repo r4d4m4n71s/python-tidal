@@ -7,6 +7,7 @@ v0.8.6
 * Add support for get<track, album, artist, playlist>count(), Workers: Use get_*_count to get the actual number of items. - tehkillerbee_
 * Only return warning if page itemtype (v2) is not implemented (Fixes: #362) - tehkillerbee_
 * Add legacy home endpoint for backwards compatibility - tehkillerbee_
+* Get playlist tracks, items count. Get playlist tracks paginated. - tehkillerbee_
 
 v0.8.5
 ------
