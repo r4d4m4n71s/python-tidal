@@ -594,8 +594,9 @@ class Favorites:
         self,
     ) -> int:
         """Get the total number of artists in the user's collection.
-        This performs a minimal API request (limit=1) to fetch metadata about
-        the artists without retrieving all of them. The API response contains
+
+        This performs a minimal API request (limit=1) to fetch metadata about the
+        artists without retrieving all of them. The API response contains
         'totalNumberOfItems', which represents the total items (artists) available.
         :return: The number of items available.
         """
@@ -652,9 +653,10 @@ class Favorites:
         self,
     ) -> int:
         """Get the total number of albums in the user's collection.
-        This performs a minimal API request (limit=1) to fetch metadata about
-        the albums without retrieving all of them. The API response contains
-        'totalNumberOfItems', which represents the total items (albums) available.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the albums
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (albums) available.
         :return: The number of items available.
         """
         params = {"limit": 1, "offset": 0}
@@ -766,8 +768,9 @@ class Favorites:
 
     def get_playlists_count(self) -> int:
         """Get the total number of playlists in the user's root collection.
-        This performs a minimal API request (limit=1) to fetch metadata about
-        the playlists without retrieving all of them. The API response contains
+
+        This performs a minimal API request (limit=1) to fetch metadata about the
+        playlists without retrieving all of them. The API response contains
         'totalNumberOfItems', which represents the total playlists available.
         :return: The number of items available.
         """
@@ -831,9 +834,10 @@ class Favorites:
         self,
     ) -> int:
         """Get the total number of tracks in the user's collection.
-        This performs a minimal API request (limit=1) to fetch metadata about
-        the tracks without retrieving all of them. The API response contains
-        'totalNumberOfItems', which represents the total items (tracks) available.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the tracks
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (tracks) available.
         :return: The number of items available.
         """
         params = {"limit": 1, "offset": 0}
