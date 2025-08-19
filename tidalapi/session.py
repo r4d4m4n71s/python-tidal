@@ -1082,21 +1082,25 @@ class Session:
 
         return user.User(session=self, user_id=user_id).factory()
 
-    def home(self) -> page.Page:
+    def home(self, use_legacy_endpoint: bool = False) -> page.Page:
         """
-        Retrieves the Home page, as seen on https://listen.tidal.com
+        Retrieves the Home page, as seen on https://listen.tidal.com, using either the V2 or V1 (legacy) endpoint
 
+        :param use_legacy_endpoint: (Optional) Request Page from legacy endpoint.
         :return: A :class:`.Page` object with the :class:`.PageCategory` list from the home page
         """
-        params = {"deviceType": "BROWSER", "locale": self.locale, "platform": "WEB"}
+        if not use_legacy_endpoint:
+            params = {"deviceType": "BROWSER", "locale": self.locale, "platform": "WEB"}
 
-        json_obj = self.request.request(
-            "GET",
-            "home/feed/static",
-            base_url=self.config.api_v2_location,
-            params=params,
-        ).json()
-        return self.page.parse(json_obj)
+            json_obj = self.request.request(
+                "GET",
+                "home/feed/static",
+                base_url=self.config.api_v2_location,
+                params=params,
+            ).json()
+            return self.page.parse(json_obj)
+        else:
+            return self.page.get("pages/home")
 
     def explore(self) -> page.Page:
         """
