@@ -51,6 +51,8 @@ if TYPE_CHECKING:
 def list_validate(lst):
     if isinstance(lst, str):
         lst = [lst]
+    if isinstance(lst, int):
+        lst = [str(lst)]
     if len(lst) == 0:
         raise ValueError("An empty list was provided.")
     return lst
