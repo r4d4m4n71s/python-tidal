@@ -6,6 +6,7 @@ History
 Upcoming
 --------
 * TooManyRequests now includes the retry_after header in its data. - semohr_
+* Added a central error class (TidalAPIError) to allow for unified error handling. - semohr_
 
 v0.8.6
 ------
@@ -247,6 +248,7 @@ v0.6.2
 * Add version tag for Track - Husky22_
 * Switch to netlify for documentation - morguldir_
 
+.. _semohr: https://github.com/semohr
 .. _morguldir: https://github.com/morguldir
 .. _Husky22: https://github.com/Husky22
 .. _ktnrg45: https://github.com/ktnrg45
