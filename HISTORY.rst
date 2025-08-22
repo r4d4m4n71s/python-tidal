@@ -2,6 +2,11 @@
 
 History
 =======
+
+Upcoming
+--------
+* TooManyRequests now includes the retry_after header in its data. - semohr_
+
 v0.8.6
 ------
 * Add support for get<track, album, artist, playlist>count(), Workers: Use get_*_count to get the actual number of items. - tehkillerbee_
