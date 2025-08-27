@@ -64,7 +64,7 @@ class InvalidUPC(TidalAPIError):
     pass
 
 
-def from_http_error(http_error: HTTPError) -> TidalAPIError | None:
+def http_error_to_tidal_error(http_error: HTTPError) -> TidalAPIError | None:
     response = http_error.response
 
     if response.content:

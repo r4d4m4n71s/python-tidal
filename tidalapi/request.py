@@ -34,7 +34,7 @@ from urllib.parse import urljoin
 
 import requests
 
-from tidalapi.session import from_http_error
+from tidalapi.exceptions import http_error_to_tidal_error
 from tidalapi.types import JsonObj
 
 log = logging.getLogger(__name__)
@@ -154,7 +154,7 @@ class Requests(object):
         except requests.HTTPError as e:
             log.info("Request resulted in exception {}".format(e))
             self.latest_err_response = request
-            if err := from_http_error(e):
+            if err := http_error_to_tidal_error(e):
                 raise err from e
             else:
                 raise  # re raise last error, usually HTTPError
