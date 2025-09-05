@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "tidalapi"
-version = "0.8.4"
+version = "0.8.6"
 description = "Unofficial API for TIDAL music streaming service."
 authors = ["Thomas Amland <thomas.amland@googlemail.com>"]
 maintainers = ["tehkillerbee <tehkillerbee@users.noreply.github.com>"]
 license = "LGPL-3.0-or-later"
 readme = ["README.rst", "HISTORY.rst"]
 homepage = "https://tidalapi.netlify.app"
-repository = "https://github.com/tamland/python-tidal"
+repository = "https://github.com/EbbLabs/python-tidal"
 documentation = "https://tidalapi.netlify.app"
 classifiers = [
     "Development Status :: 4 - Beta",

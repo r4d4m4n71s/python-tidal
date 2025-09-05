@@ -2,6 +2,28 @@
 
 History
 =======
+
+Upcoming
+--------
+* TooManyRequests now includes the retry_after header in its data. - semohr_
+* Added a central error class (TidalAPIError) to allow for unified error handling. - semohr_
+
+v0.8.6
+------
+* Add support for get<track, album, artist, playlist>count(), Workers: Use get_*_count to get the actual number of items. - tehkillerbee_
+* Only return warning if page itemtype (v2) is not implemented (Fixes: #362) - tehkillerbee_
+* Add legacy home endpoint for backwards compatibility - tehkillerbee_
+* Get playlist tracks, items count. Get playlist tracks paginated. - tehkillerbee_
+
+v0.8.5
+------
+* Cleanup: Removed deprecated function(s). - tehkillerbee_
+* Feature: MixV2: Add support for parsing mixes originating from PageCategoryV2. - tehkillerbee_
+* Feature: Get home page using new v2 endpoint. Add support for PageCategoryV2 - tehkillerbee_, Nokse22_
+* Feature: Add pagination workers from mopidy-tidal - tehkillerbee_, BlackLight_
+* Fix(playlist): Improve v2 endpoint usage. - tehkillerbee_
+* fix(playlist): More robust handling of the passed objects. - BlackLight_
+
 v0.8.4
 ------
 * Album: Add UPC barcode, genre URL for tidal tracks - tehkillerbee_
@@ -226,6 +248,7 @@ v0.6.2
 * Add version tag for Track - Husky22_
 * Switch to netlify for documentation - morguldir_
 
+.. _semohr: https://github.com/semohr
 .. _morguldir: https://github.com/morguldir
 .. _Husky22: https://github.com/Husky22
 .. _ktnrg45: https://github.com/ktnrg45

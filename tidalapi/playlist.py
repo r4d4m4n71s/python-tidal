@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, List, Optional, Sequence, Union, cast
 from tidalapi.exceptions import ObjectNotFound, TooManyRequests
 from tidalapi.types import ItemOrder, JsonObj, OrderDirection
 from tidalapi.user import LoggedInUser
+from tidalapi.workers import get_items
 
 if TYPE_CHECKING:
     from tidalapi.artist import Artist
@@ -80,20 +81,24 @@ class Playlist:
         if playlist_id:
             try:
                 request = self.request.request("GET", self._base_url % self.id)
-            except ObjectNotFound:
-                raise ObjectNotFound("Playlist not found")
-            except TooManyRequests:
-                raise TooManyRequests("Playlist unavailable")
+            except ObjectNotFound as e:
+                e.args = ("Playlist with id %s not found" % playlist_id,)
+                raise e
+            except TooManyRequests as e:
+                e.args = ("Playlist unavailable",)
+                raise e
             else:
                 self._etag = request.headers["etag"]
                 self.parse(request.json())
 
-    def parse(self, json_obj: JsonObj) -> "Playlist":
+    def parse(self, obj: JsonObj) -> "Playlist":
         """Parses a playlist from tidal, replaces the current playlist object.
 
-        :param json_obj: Json data returned from api.tidal.com containing a playlist
+        :param obj: Json data returned from api.tidal.com containing a playlist
         :return: Returns a copy of the original :exc: 'Playlist': object
         """
+        json_obj = obj.get("data", obj)
+
         self.id = json_obj["uuid"]
         self.trn = f"trn:playlist:{self.id}"
         self.name = json_obj["title"]
@@ -159,6 +164,40 @@ class Playlist:
         self.parse(json_obj)
         return copy.copy(self.factory())
 
+    def get_tracks_count(
+        self,
+    ) -> int:
+        """Get the total number of tracks in the playlist.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the tracks
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (tracks) available.
+        :return: The number of items available.
+        """
+        params = {"limit": 1, "offset": 0}
+
+        json_obj = self.request.map_request(
+            self._base_url % self.id + "/tracks", params=params
+        )
+        return json_obj.get("totalNumberOfItems", 0)
+
+    def get_items_count(
+        self,
+    ) -> int:
+        """Get the total number of items in the playlist.
+
+        This performs a minimal API request (limit=1) to fetch metadata about the tracks
+        without retrieving all of them. The API response contains 'totalNumberOfItems',
+        which represents the total items (tracks) available.
+        :return: The number of items available.
+        """
+        params = {"limit": 1, "offset": 0}
+
+        json_obj = self.request.map_request(
+            self._base_url % self.id + "/items", params=params
+        )
+        return json_obj.get("totalNumberOfItems", 0)
+
     def tracks(
         self,
         limit: Optional[int] = None,
@@ -192,6 +231,20 @@ class Playlist:
                 json_obj=request.json(), parse=self.session.parse_track
             )
         )
+
+    def tracks_paginated(
+        self,
+        order: Optional[ItemOrder] = None,
+        order_direction: Optional[OrderDirection] = None,
+    ) -> List["Playlist"]:
+        """Get the tracks in the playlist, using pagination.
+
+        :param order: Optional; A :class:`ItemOrder` describing the ordering type when returning the user favorite tracks. eg.: "NAME, "DATE"
+        :param order_direction: Optional; A :class:`OrderDirection` describing the ordering direction when sorting by `order`. eg.: "ASC", "DESC"
+        :return: A :class:`list` :class:`~tidalapi.playlist.Playlist` objects containing the favorite tracks.
+        """
+        count = self.get_tracks_count()
+        return get_items(self.tracks, count, order, order_direction)
 
     def items(
         self,
@@ -319,9 +372,10 @@ class Folder:
                         return
                 raise ObjectNotFound
             except ObjectNotFound:
-                raise ObjectNotFound(f"Folder not found")
-            except TooManyRequests:
-                raise TooManyRequests("Folder unavailable")
+                raise ObjectNotFound("Folder not found")
+            except TooManyRequests as e:
+                e.args = ("Folder unavailable",)
+                raise e
 
     def _reparse(self) -> None:
         params = {
